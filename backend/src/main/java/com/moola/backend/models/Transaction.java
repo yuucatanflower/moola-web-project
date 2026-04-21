@@ -32,6 +32,9 @@ public class Transaction {
     @Column(nullable = true)
     private String description;
 
+    @Column(nullable = false)
+    private boolean isRecurrent = false;
+
     @ManyToOne // many transactions can belong to one category
     @JoinColumn(name = "category_id", nullable = true) //creates the Foreign Key column in MySQL
     private Category category;
