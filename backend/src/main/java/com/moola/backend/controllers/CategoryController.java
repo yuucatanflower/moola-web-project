@@ -1,46 +1,54 @@
 package com.moola.backend.controllers;
 
 import com.moola.backend.models.Category;
+import com.moola.backend.models.User;
+import com.moola.backend.repositories.UserRepository;
 import com.moola.backend.services.CategoryService;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
-
+import java.security.Principal;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/categories")
 @CrossOrigin(origins = "*")
 public class CategoryController {
-
     private final CategoryService categoryService;
+    private final UserRepository userRepository;
 
-    // Injecting the Service
-    public CategoryController(CategoryService categoryService) {
+    public CategoryController(CategoryService categoryService, UserRepository userRepository) {
         this.categoryService = categoryService;
+        this.userRepository = userRepository;
+    }
+
+    private User getAuthenticatedUser(Principal principal) {
+        return userRepository.findByUsername(principal.getName()).orElseThrow();
     }
 
     @GetMapping
-    public List<Category> getAllCategories() {
-        return categoryService.getAllCategories();
+    public List<Category> getAllCategories(Principal principal) {
+        return categoryService.getAllCategories(getAuthenticatedUser(principal));
     }
 
     @PostMapping
-    public Category createCategory(@RequestBody Category category) {
-        return categoryService.createCategory(category);
+    public Category createCategory(@Valid @RequestBody Category category, Principal principal) {
+        return categoryService.createCategory(category, getAuthenticatedUser(principal));
     }
 
     @PutMapping("/{id}")
-    public Category updateCategory(@PathVariable Long id, @RequestBody Category updatedCategory) {
-        return categoryService.updateCategory(id, updatedCategory);
+    public Category updateCategory(@PathVariable UUID id, @Valid @RequestBody Category updatedCategory, Principal principal) {
+        return categoryService.updateCategory(id, updatedCategory, getAuthenticatedUser(principal));
     }
 
     @DeleteMapping("/{id}")
-    public void deleteCategory(@PathVariable Long id) {
-        categoryService.deleteCategory(id);
+    public void deleteCategory(@PathVariable UUID id, Principal principal) {
+        categoryService.deleteCategory(id, getAuthenticatedUser(principal));
     }
 
     @PatchMapping("/{id}")
-    public Category patchCategory(@PathVariable Long id, @RequestBody Map<String, Object> updates) {
-        return categoryService.patchCategory(id, updates);
+    public Category patchCategory(@PathVariable UUID id, @RequestBody Map<String, Object> updates, Principal principal) {
+        return categoryService.patchCategory(id, updates, getAuthenticatedUser(principal));
     }
 }

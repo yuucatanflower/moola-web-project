@@ -1,38 +1,54 @@
 package com.moola.backend.controllers;
 
 import com.moola.backend.models.Transaction;
+import com.moola.backend.models.User;
+import com.moola.backend.repositories.UserRepository;
 import com.moola.backend.services.TransactionService;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
+import java.security.Principal;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/transactions")
 @CrossOrigin(origins = "*")
 public class TransactionController {
     private final TransactionService transactionService;
+    private final UserRepository userRepository;
 
-    // Use ONLY the service, not repositories
-    public TransactionController(TransactionService transactionService) {
+    public TransactionController(TransactionService transactionService, UserRepository userRepository) {
         this.transactionService = transactionService;
+        this.userRepository = userRepository;
+    }
+
+    private User getAuthenticatedUser(Principal principal) {
+        return userRepository.findByUsername(principal.getName()).orElseThrow();
     }
 
     @GetMapping
-    public List<Transaction> getAll() { return transactionService.getAll(); }
+    public List<Transaction> getAll(Principal principal) {
+        return transactionService.getAll(getAuthenticatedUser(principal));
+    }
 
     @PostMapping
-    public Transaction create(@RequestBody Transaction t) { return transactionService.create(t); }
+    public Transaction create(@Valid @RequestBody Transaction t, Principal principal) {
+        return transactionService.create(t, getAuthenticatedUser(principal));
+    }
 
     @PutMapping("/{id}")
-    public Transaction update(@PathVariable Long id, @RequestBody Transaction t) {
-        return transactionService.update(id, t); // This calls the service logic we built
+    public Transaction update(@PathVariable UUID id, @Valid @RequestBody Transaction t, Principal principal) {
+        return transactionService.update(id, t, getAuthenticatedUser(principal));
     }
 
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable Long id) { transactionService.delete(id); }
+    public void delete(@PathVariable UUID id, Principal principal) {
+        transactionService.delete(id, getAuthenticatedUser(principal));
+    }
 
     @PatchMapping("/{id}")
-    public Transaction patch(@PathVariable Long id, @RequestBody Map<String, Object> updates) {
-        return transactionService.patch(id, updates);
+    public Transaction patch(@PathVariable UUID id, @RequestBody Map<String, Object> updates, Principal principal) {
+        return transactionService.patch(id, updates, getAuthenticatedUser(principal));
     }
 }

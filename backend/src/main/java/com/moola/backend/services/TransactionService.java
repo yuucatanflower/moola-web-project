@@ -2,11 +2,15 @@ package com.moola.backend.services;
 
 import com.moola.backend.models.Category;
 import com.moola.backend.models.Transaction;
+import com.moola.backend.models.User;
 import com.moola.backend.repositories.CategoryRepository;
 import com.moola.backend.repositories.TransactionRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 public class TransactionService {
@@ -18,46 +22,54 @@ public class TransactionService {
         this.categoryRepository = categoryRepository;
     }
 
-    public List<Transaction> getAll() { return repository.findAll(); }
+    public List<Transaction> getAll(User user) {
+        return repository.findAllByUserId(user.getId());
+    }
 
-    public Transaction create(Transaction transaction) {
+    public Transaction create(Transaction transaction, User user) {
+        transaction.setUser(user);
         if (transaction.getCategory() != null && transaction.getCategory().getId() != null) {
-            Category fullCategory = categoryRepository.findById(transaction.getCategory().getId())
-                    .orElseThrow(() -> new RuntimeException("Category not found!"));
+            Category fullCategory = categoryRepository.findByIdAndUserId(transaction.getCategory().getId(), user.getId())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Category not found"));
             transaction.setCategory(fullCategory);
         }
         return repository.save(transaction);
     }
 
-    //Full update method that handles the Category lookup correctly
-    public Transaction update(Long id, Transaction updatedTransaction) {
-        return repository.findById(id).map(existing -> {
+    public Transaction update(UUID id, Transaction updatedTransaction, User user) {
+        return repository.findByIdAndUserId(id, user.getId()).map(existing -> {
             existing.setAmount(updatedTransaction.getAmount());
             existing.setType(updatedTransaction.getType());
             existing.setDate(updatedTransaction.getDate());
             existing.setDescription(updatedTransaction.getDescription());
             existing.setRecurrent(updatedTransaction.isRecurrent());
+            existing.setImpulseBuy(updatedTransaction.isImpulseBuy());
+            existing.setRegret(updatedTransaction.isRegret());
 
-            // Handle Category lookup properly
             if (updatedTransaction.getCategory() != null && updatedTransaction.getCategory().getId() != null) {
-                Category fullCategory = categoryRepository.findById(updatedTransaction.getCategory().getId())
-                        .orElseThrow(() -> new RuntimeException("Category not found!"));
+                Category fullCategory = categoryRepository.findByIdAndUserId(updatedTransaction.getCategory().getId(), user.getId())
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Category not found"));
                 existing.setCategory(fullCategory);
             } else {
                 existing.setCategory(null);
             }
-
             return repository.save(existing);
-        }).orElseThrow(() -> new RuntimeException("Transaction not found with id " + id));
+        }).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Transaction not found"));
     }
 
-    public Transaction patch(Long id, Map<String, Object> updates) {
-        return repository.findById(id).map(existing -> {
+    public Transaction patch(UUID id, Map<String, Object> updates, User user) {
+        return repository.findByIdAndUserId(id, user.getId()).map(existing -> {
             if (updates.containsKey("description")) existing.setDescription((String) updates.get("description"));
             if (updates.containsKey("isRecurrent")) existing.setRecurrent((boolean) updates.get("isRecurrent"));
+            if (updates.containsKey("isImpulseBuy")) existing.setImpulseBuy((boolean) updates.get("isImpulseBuy"));
+            if (updates.containsKey("isRegret")) existing.setRegret((boolean) updates.get("isRegret"));
             return repository.save(existing);
-        }).orElseThrow(() -> new RuntimeException("Not found"));
+        }).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Transaction not found"));
     }
 
-    public void delete(Long id) { repository.deleteById(id); }
+    public void delete(UUID id, User user) {
+        Transaction existing = repository.findByIdAndUserId(id, user.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Transaction not found"));
+        repository.delete(existing);
+    }
 }

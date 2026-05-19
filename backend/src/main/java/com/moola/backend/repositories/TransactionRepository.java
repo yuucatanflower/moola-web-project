@@ -2,11 +2,14 @@ package com.moola.backend.repositories;
 
 import com.moola.backend.models.Transaction;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
-
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
-@Repository
-public interface TransactionRepository extends JpaRepository<Transaction, Long> {
-    List<Transaction> findByCategoryId(Long categoryId);
+public interface TransactionRepository extends JpaRepository<Transaction, UUID> {
+    List<Transaction> findByCategoryIdAndUserId(UUID categoryId, UUID userId);
+    List<Transaction> findAllByUserId(UUID userId);
+    Optional<Transaction> findByIdAndUserId(UUID id, UUID userId);
+    List<Transaction> findAllByUserIdAndDateAfter(UUID userId, LocalDate cutoffDate);
 }
