@@ -1,33 +1,34 @@
 package com.moola.backend.models;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.UUID;
 
-@Entity // tells Spring Boot to make a database table out of this class
-@Table(name = "moola_transactions") // names the table in mysql
-@Data // generates getters , setters and toString
-@NoArgsConstructor // auto-generates an empty constructor
-@AllArgsConstructor // auto-generates a constructor with all variables
-
+@Entity
+@Table(name = "moola_transactions")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Transaction {
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(columnDefinition = "VARCHAR(36)", updatable = false, nullable = false)
+    private UUID id;
 
-    @Id // primary key
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // auto-increments (1, 2, 3...)
-    private Long id;
+    @Positive(message = "Amount must be greater than zero")
+    @Column(nullable = false)
+    private BigDecimal amount;
 
     @Column(nullable = false)
-    private BigDecimal amount; // BigDecimal for money to avoid decimal math errors
+    private String type;
 
     @Column(nullable = false)
-    private String type; // holds "income" or "expense"
-
-    @Column(nullable = false)
-    private LocalDate date; // tracks current date
+    private LocalDate date;
 
     @Column(nullable = true)
     private String description;
@@ -35,7 +36,18 @@ public class Transaction {
     @Column(nullable = false)
     private boolean isRecurrent = false;
 
-    @ManyToOne // many transactions can belong to one category
-    @JoinColumn(name = "category_id", nullable = true) //creates the Foreign Key column in MySQL
+    @Column(nullable = false)
+    private boolean isImpulseBuy = false;
+
+    @Column(nullable = false)
+    private boolean isRegret = false;
+
+    @ManyToOne
+    @JoinColumn(name = "category_id", nullable = true)
     private Category category;
+
+    // Security Fix: Data Ownership
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 }

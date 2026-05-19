@@ -20,13 +20,13 @@ public class AuthService {
 
     public User register(User user) {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
+        user.setRole("USER"); // SECURITY FIX: Hardcoded role prevents escalation
         return userRepository.save(user);
     }
 
     public String login(String username, String password) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found")); // This causes the 500
-
+                .orElseThrow(() -> new RuntimeException("User not found"));
         if (passwordEncoder.matches(password, user.getPassword())) {
             return jwtUtils.generateToken(username);
         }
