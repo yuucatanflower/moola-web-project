@@ -1,18 +1,218 @@
-@import "tailwindcss";
+/* frontend/src/index.css */
 
-:root {
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-    "Segoe UI", sans-serif;
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
+/* Global Reset and Fintech Typography */
 * {
+  margin: 0;
+  padding: 0;
   box-sizing: border-box;
+  font-family: 'Urbanist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 body {
-  margin: 0;
+  background-color: #0a0a0a;
+  color: #DAFFDE;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+/* Dashboard Layout Wrapper */
+.dashboard-container {
+  width: 100%;
+  max-width: 1200px;
+  background-color: #000000;
+  border: 1px solid #1a1a1a;
+  border-radius: 24px;
+  padding: 40px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle Neon Glow Effect behind the Dashboard */
+.dashboard-container::before {
+  content: '';
+  position: absolute;
+  top: -150px;
+  right: -150px;
+  width: 350px;
+  height: 350px;
+  background: radial-gradient(circle, rgba(222, 255, 154, 0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* Header Styling */
+header {
+  margin-bottom: 40px;
+  border-bottom: 1px solid #1a1a1a;
+  padding-bottom: 20px;
+}
+
+header h1 {
+  font-size: 36px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -1px;
+}
+
+header h1 span {
+  color: #DEFF9A;
+}
+
+/* Main Dashboard Structure */
+.main-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Card Sections */
+.card-section {
+  background-color: #0a0a0a;
+  border: 1px solid #222222;
+  border-radius: 20px;
+  padding: 30px;
+  transition: border-color 0.3s ease;
+}
+
+.card-section:hover {
+  border-color: rgba(222, 255, 154, 0.3);
+}
+
+.card-section h2 {
+  font-size: 22px;
+  color: #ffffff;
+  margin-bottom: 25px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Transaction List & Item Styling */
+.transaction-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.transaction-item {
+  display: flex;
+  align-items: center;
+  background-color: #000000;
+  border: 1px solid #1a1a1a;
+  border-radius: 16px;
+  padding: 16px;
+  justify-content: space-between;
+}
+
+/* Clearbit Logo Framework */
+.vendor-logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background-color: #111;
+  object-fit: contain;
+  margin-right: 15px;
+}
+
+.vendor-name {
+  display: block;
+  font-size: 18px;
+  font-weight: 500;
+  color: #ffffff;
+  margin-bottom: 4px;
+}
+
+/* Behavioral Features: Regret Tag Styling */
+.tag {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.regret-tag {
+  background-color: rgba(255, 107, 107, 0.1);
+  color: #ff6b6b;
+  border: 1px solid rgba(255, 107, 107, 0.2);
+}
+
+/* Behavioral Features: Time Translator Layout */
+.price-info {
+  text-align: right;
+}
+
+.price {
+  display: block;
+  font-size: 20px;
+  font-weight: 700;
+  color: #DEFF9A;
+  margin-bottom: 4px;
+}
+
+.time-translated {
+  display: block;
+  font-size: 13px;
+  color: #DAFFDE;
+  opacity: 0.6;
+}
+
+/* Gemini AI Section Layout */
+.ai-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.ai-btn {
+  background-color: #DEFF9A;
+  color: #000000;
+  border: none;
+  border-radius: 14px;
+  padding: 14px 24px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.ai-btn:hover {
+  background-color: #ffffff;
+  box-shadow: 0 0 15px rgba(222, 255, 154, 0.4);
+  transform: translateY(-1px);
+}
+
+.ai-btn:active {
+  transform: translateY(0);
+}
+
+/* Gemini Output Box styling */
+.ai-response-box {
+  background: rgba(222, 255, 154, 0.03);
+  border: 1px dashed rgba(222, 255, 154, 0.3);
+  border-radius: 14px;
+  padding: 20px;
+  margin-top: 10px;
+  flex-grow: 1;
+}
+
+.ai-response-box p {
+  font-size: 16px;
+  line-height: 1.6;
+  color: #DAFFDE;
 }
