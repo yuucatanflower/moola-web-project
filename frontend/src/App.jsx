@@ -1,36 +1,63 @@
+// frontend/src/App.jsx
+import React, { useState, useEffect } from 'react';
+import { fetchTransactions } from './services/api';
+import './index.css';
+
 function App() {
+  const [transactions, setTransactions] = useState([]);
+  const [aiAdvice, setAiAdvice] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  // Mock hourly wage used for the Time Translator feature
+  const hourlyWage = 15; 
+
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-100">
-      <section className="mx-auto flex min-h-screen w-full max-w-6xl items-center px-6 py-16">
-        <div className="max-w-2xl">
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-300">
-            Moola frontend
-          </p>
-          <h1 className="mt-5 text-5xl font-semibold leading-tight text-white">
-            React and Tailwind are ready.
-          </h1>
-          <p className="mt-5 max-w-xl text-lg leading-8 text-slate-300">
-            Build the money dashboard here and connect it to the Spring Boot API
-            on port 8081.
-          </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <button
-              className="rounded-md bg-emerald-400 px-5 py-3 font-semibold text-slate-950 transition hover:bg-emerald-300"
-              type="button"
-            >
-              Start building
-            </button>
-            <a
-              className="rounded-md border border-slate-700 px-5 py-3 font-semibold text-slate-100 transition hover:border-slate-500"
-              href="http://localhost:8081/swagger-ui/index.html"
-            >
-              Open API docs
-            </a>
+    <div className="dashboard-container">
+      <header>
+        <h1>moola<span>.</span> Dashboard</h1>
+      </header>
+
+      <main className="main-content">
+        {/* Section 1: Transaction List featuring Clearbit Logs & Regret Tags */}
+        <section className="card-section">
+          <h2>Your Expenses</h2>
+          <div className="transaction-list">
+            {/* TODO: Map through real backend transactions once endpoints are live */}
+            <div className="transaction-item">
+              {/* Clearbit Logo API Integration */}
+              <img src="https://logo.clearbit.com/netflix.com" alt="Logo" className="vendor-logo" />
+              <div>
+                <span className="vendor-name">Netflix Subscription</span>
+                {/* Regret Tag Feature */}
+                <span className="tag regret-tag">Regret 😣</span>
+              </div>
+              {/* Time/Money Translator Integration */}
+              <div className="price-info">
+                <span className="price">€17.99</span>
+                <span className="time-translated">⌛ {(17.99 / hourlyWage).toFixed(1)} hrs of work</span>
+              </div>
+            </div>
           </div>
-        </div>
-      </section>
-    </main>
-  )
+        </section>
+
+        {/* Section 2: The AI Financial Advisor */}
+        <section className="card-section ai-section">
+          <h2><i className="fa-solid fa-robot"></i> Financial Advisor</h2>
+          <button 
+            className="ai-btn" 
+            onClick={() => setAiAdvice("Switch to the ad-supported Netflix tier immediately to save €100 annually!")}
+          >
+            Ask the Advisor
+          </button>
+          {aiAdvice && (
+            <div className="ai-response-box">
+              <p>{aiAdvice}</p>
+            </div>
+          )}
+        </section>
+      </main>
+    </div>
+  );
 }
 
-export default App
+export default App;
