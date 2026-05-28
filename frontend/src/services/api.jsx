@@ -1,4 +1,4 @@
-const API_BASE_URL = "http://localhost:8081/api";
+const API_BASE_URL = "/api";
 
 const readResponseBody = async (response) => {
   const contentType = response.headers.get("content-type");
@@ -15,10 +15,13 @@ const request = async (path, options) => {
   const body = await readResponseBody(response);
 
   if (!response.ok) {
+    const jsonMessage =
+      body && typeof body === "object" && "message" in body ? body.message : null;
     const message =
-      typeof body === "string" && body.trim()
+      jsonMessage ||
+      (typeof body === "string" && body.trim()
         ? body
-        : "The backend rejected the request.";
+        : "The backend rejected the request.");
     throw new Error(message);
   }
 

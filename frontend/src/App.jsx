@@ -1,51 +1,15 @@
 import { useEffect, useState } from "react";
+import AuthPanel from "./components/auth/AuthPanel";
+import Dashboard from "./components/dashboard/Dashboard";
+import { EMPTY_AUTH_FORM } from "./constants/auth";
 import { fetchTransactions, loginUser, registerUser } from "./services/api";
-import AuthPanel from "./components/AuthPanel";
-import Dashboard from "./components/Dashboard";
+import { buildSession, clearSession, readStoredSession, saveSession } from "./utils/session";
 import "./index.css";
-
-const SESSION_KEY = "moola.auth.v1";
-const EMPTY_FORM = {
-  username: "",
-  password: "",
-  hourlyWage: "15",
-};
-
-const readStoredSession = () => {
-  try {
-    const storedSession = localStorage.getItem(SESSION_KEY);
-    return storedSession ? JSON.parse(storedSession) : null;
-  } catch {
-    localStorage.removeItem(SESSION_KEY);
-    return null;
-  }
-};
-
-const saveSession = (session) => {
-  localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-};
-
-const clearSession = () => {
-  localStorage.removeItem(SESSION_KEY);
-};
-
-const buildSession = ({ accessToken, loginUserObj, registeredUser, username }) => {
-  const currentUser = loginUserObj || registeredUser;
-  return {
-    accessToken,
-    user: {
-      id: currentUser?.id ?? null,
-      username: currentUser?.username ?? username,
-      role: currentUser?.role ?? "USER",
-      hourlyWage: currentUser?.hourlyWage == null ? null : Number(currentUser.hourlyWage),
-    },
-  };
-};
 
 function App() {
   const [session, setSession] = useState(readStoredSession);
   const [authMode, setAuthMode] = useState("login");
-  const [authForm, setAuthForm] = useState(EMPTY_FORM);
+  const [authForm, setAuthForm] = useState(EMPTY_AUTH_FORM);
   const [authMessage, setAuthMessage] = useState(null);
   const [authPending, setAuthPending] = useState(false);
   const [transactions, setTransactions] = useState([]);
@@ -130,14 +94,15 @@ function App() {
 
       saveSession(nextSession);
       setSession(nextSession);
-      setAuthForm(EMPTY_FORM);
-    } catch {
+      setAuthForm(EMPTY_AUTH_FORM);
+    } catch (error) {
       setAuthMessage({
         type: "error",
         text:
-            authMode === "register"
-                ? "Account creation failed. Check the backend and try another username."
-                : "Login failed. Check your username, password, and backend server.",
+          error.message ||
+          (authMode === "register"
+            ? "Account creation failed. Check the backend and try another username."
+            : "Login failed. Check your username, password, and backend server."),
       });
     } finally {
       setAuthPending(false);
@@ -155,26 +120,26 @@ function App() {
   };
 
   return (
-      <div className="app-shell">
-        {session ? (
-            <Dashboard
-                onLogout={handleLogout}
-                session={session}
-                transactions={transactions}
-                transactionsState={transactionsState}
-            />
-        ) : (
-            <AuthPanel
-                authMode={authMode}
-                form={authForm}
-                message={authMessage}
-                onFieldChange={handleFieldChange}
-                onModeChange={handleModeChange}
-                onSubmit={handleAuthSubmit}
-                pending={authPending}
-            />
-        )}
-      </div>
+    <div className="grid min-h-screen place-items-center bg-[radial-gradient(circle_at_22%_10%,rgba(126,255,175,0.18),transparent_28rem),radial-gradient(circle_at_82%_82%,rgba(222,255,154,0.10),transparent_30rem),linear-gradient(145deg,#020302_0%,#071108_48%,#020302_100%)] p-[clamp(18px,4vw,48px)] font-sans text-[#daffde]">
+      {session ? (
+        <Dashboard
+          onLogout={handleLogout}
+          session={session}
+          transactions={transactions}
+          transactionsState={transactionsState}
+        />
+      ) : (
+        <AuthPanel
+          authMode={authMode}
+          form={authForm}
+          message={authMessage}
+          onFieldChange={handleFieldChange}
+          onModeChange={handleModeChange}
+          onSubmit={handleAuthSubmit}
+          pending={authPending}
+        />
+      )}
+    </div>
   );
 }
 
