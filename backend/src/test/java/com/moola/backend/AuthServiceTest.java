@@ -12,6 +12,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -51,7 +52,7 @@ public class AuthServiceTest {
         when(passwordEncoder.encode("rawPassword")).thenReturn("hashedPassword");
         when(userRepository.save(any(User.class))).thenReturn(testUser);
 
-        User result = authService.register(testUser);
+        User result = authService.register(testUser, BigDecimal.valueOf(100.00));
 
         assertEquals("USER", result.getRole()); // Verifies the privilege escalation patch!
         assertEquals("hashedPassword", result.getPassword());
