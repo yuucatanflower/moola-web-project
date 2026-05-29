@@ -59,8 +59,12 @@ public class TransactionService {
                 transaction.getAmount()
         );
 
-        // Update ledger metrics with the normalized monetary scale
-        wallet.setBalance(wallet.getBalance().subtract(walletNormalizedAmount));
+        // Update ledger metrics with the normalized monetary scale based on dynamic direction type
+        if (transaction.getType() != null && transaction.getType().equalsIgnoreCase("INCOME")) {
+            wallet.setBalance(wallet.getBalance().add(walletNormalizedAmount));
+        } else {
+            wallet.setBalance(wallet.getBalance().subtract(walletNormalizedAmount));
+        }
         walletRepository.save(wallet);
 
         return repository.save(transaction);
@@ -81,7 +85,13 @@ public class TransactionService {
                     existing.getAmount()
             );
 
-            BigDecimal balanceBeforeOldTransaction = wallet.getBalance().add(existingNormalizedRefund);
+            // Revert historical balance modifications conditionally based on previous type string state
+            BigDecimal balanceBeforeOldTransaction;
+            if (existing.getType() != null && existing.getType().equalsIgnoreCase("INCOME")) {
+                balanceBeforeOldTransaction = wallet.getBalance().subtract(existingNormalizedRefund);
+            } else {
+                balanceBeforeOldTransaction = wallet.getBalance().add(existingNormalizedRefund);
+            }
 
             // 2. Convert the newly updated transaction details to calculate the new deduction
             String updatedCurrency = (updatedTransaction.getCurrency() != null) ? updatedTransaction.getCurrency() : wallet.getCurrency();
@@ -91,8 +101,12 @@ public class TransactionService {
                     updatedTransaction.getAmount()
             );
 
-            // 3. Commit balance state shifts
-            wallet.setBalance(balanceBeforeOldTransaction.subtract(newlyNormalizedDeduction));
+            // 3. Commit balance state shifts based on newly incoming transaction type metrics
+            if (updatedTransaction.getType() != null && updatedTransaction.getType().equalsIgnoreCase("INCOME")) {
+                wallet.setBalance(balanceBeforeOldTransaction.add(newlyNormalizedDeduction));
+            } else {
+                wallet.setBalance(balanceBeforeOldTransaction.subtract(newlyNormalizedDeduction));
+            }
             walletRepository.save(wallet);
 
             // 4. Update the structural parameters on the persistence tier
@@ -144,7 +158,12 @@ public class TransactionService {
                 existing.getAmount()
         );
 
-        wallet.setBalance(wallet.getBalance().add(refundAmount));
+        // Reverse financial impacts selectively upon deletion depending on transaction configuration parameters
+        if (existing.getType() != null && existing.getType().equalsIgnoreCase("INCOME")) {
+            wallet.setBalance(wallet.getBalance().subtract(refundAmount));
+        } else {
+            wallet.setBalance(wallet.getBalance().add(refundAmount));
+        }
         walletRepository.save(wallet);
 
         repository.delete(existing);
