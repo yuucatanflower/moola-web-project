@@ -20,6 +20,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
+// tests currency conversion without calling the real Frankfurter API
 public class CurrencyServiceTest {
 
     @Mock
@@ -30,7 +31,7 @@ public class CurrencyServiceTest {
 
     @BeforeEach
     void setUp() {
-        // Inject the mocked RestTemplate and a dummy URL into the service
+        // give the service a fake HTTP client and fake API URL
         ReflectionTestUtils.setField(currencyService, "restTemplate", restTemplate);
         ReflectionTestUtils.setField(currencyService, "apiUrl", "https://mock-api.com");
     }
@@ -46,7 +47,7 @@ public class CurrencyServiceTest {
     void convertCurrency_WithValidApiResponse_ShouldReturnConvertedAmount() {
         BigDecimal originalAmount = new BigDecimal("100.00");
 
-        // Mocking the Frankfurter v2 JSON response structure: { "rate": 1.08 }
+        // fake the Frankfurter response with a sample rate
         Map<String, Object> mockResponse = new HashMap<>();
         mockResponse.put("rate", 1.08);
 
@@ -61,11 +62,11 @@ public class CurrencyServiceTest {
     void convertCurrency_WhenApiFails_ShouldFallbackToOriginalAmount() {
         BigDecimal originalAmount = new BigDecimal("100.00");
 
-        // Simulating an API crash or timeout
+        // pretend the external API is down
         when(restTemplate.getForObject(anyString(), eq(Map.class))).thenThrow(new RuntimeException("API Down"));
 
         BigDecimal result = currencyService.convertCurrency("EUR", "USD", originalAmount);
 
-        assertEquals(originalAmount, result); // Ensures the app doesn't crash if the API dies
+        assertEquals(originalAmount, result);
     }
 }

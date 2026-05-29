@@ -6,15 +6,14 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.math.BigDecimal;
-import java.util.UUID; // Added import for UUID
 
 @Setter
 @Getter
 @Entity
 @Table(name = "wallets")
+// database object for the user's current balance and wallet currency
 public class Wallet {
 
-    // Getters and Setters
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -26,7 +25,7 @@ public class Wallet {
     private String currency = "EUR";
 
     @OneToOne
-    @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false) // explicit reference to the UUID id column
+    @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)
     @JsonIgnore
     private User user;
 

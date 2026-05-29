@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+// database helper for categories the user id methods stop users from reading each other's categories
 public interface CategoryRepository extends JpaRepository<Category, UUID> {
     List<Category> findAllByUserId(UUID userId);
     Optional<Category> findByIdAndUserId(UUID id, UUID userId);

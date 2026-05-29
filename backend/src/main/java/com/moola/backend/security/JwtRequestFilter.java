@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 @Component
+// reads the Bearer token from each request and logs the user into Spring Security for that request
 public class JwtRequestFilter extends OncePerRequestFilter {
 
     private final JwtUtils jwtUtils;
@@ -30,13 +31,13 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         String username = null;
         String jwt = null;
 
-        // Check if the header starts with "Bearer "
+        // tokens come from the frontend as: Authorization: Bearer <token>
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
             jwt = authorizationHeader.substring(7);
             username = jwtUtils.getUsernameFromToken(jwt);
         }
 
-        // If a username was found and there is no current security context
+        // a valid token makes this request count as authenticated
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             if (jwtUtils.validateToken(jwt)) {
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(

@@ -20,6 +20,7 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
+// defines password hashing, CORS, public routes, and JWT protection for the backend
 public class SecurityConfig {
 
     private final JwtRequestFilter jwtRequestFilter;
@@ -33,22 +34,22 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    // Explicit CORS Configuration Bean
+    // cors lets the browser frontend call this backend from another local port
     @Bean
     public CorsFilter corsFilter() {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
 
-        // Allow the specific frontend origin (or use "*" for testing, but specific is safer)
+        // allowed frontend dev-server addresses
         config.setAllowedOriginPatterns(List.of("http://localhost:5173", "http://127.0.0.1:5173"));
 
-        // Allow necessary headers including the Authorization header for JWT
+        // authorization is needed because the frontend sends the JWT in this header
         config.setAllowedHeaders(List.of("Origin", "Content-Type", "Accept", "Authorization"));
 
-        // Allow all required HTTP methods, especially OPTIONS for preflight requests
+        // options is needed for browser preflight checks
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
 
-        // Critical for allowing credentials (like cookies or auth headers) if needed
+        // allows auth-related browser requests to pass CORS
         config.setAllowCredentials(true);
 
         source.registerCorsConfiguration("/**", config);
@@ -58,7 +59,6 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                // Enable CORS using Customizer.withDefaults() which automatically picks up our CorsFilter bean
                 .cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
@@ -67,7 +67,7 @@ public class SecurityConfig {
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
-        // Add the JWT filter to the chain
+        // check JWTs before Spring's normal username/password filter runs
         http.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @Service
+// business logic for transactions it also updates the wallet balance when money moves
 public class TransactionService {
     private final TransactionRepository repository;
     private final CategoryRepository categoryRepository;
@@ -38,7 +39,7 @@ public class TransactionService {
         return repository.findAllByUserId(user.getId());
     }
 
-    @Transactional // Database rollback protection if API or repository layer errors out
+    @Transactional // if one database change fails, the whole transaction save is undone
     public Transaction create(Transaction transaction, User user) {
         transaction.setUser(user);
 
@@ -51,7 +52,7 @@ public class TransactionService {
         Wallet wallet = walletRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Wallet ledger missing for user context"));
 
-        // Convert transaction source currency to match wallet destination currency type
+        // convert the transaction amount into the wallet currency before changing the balance
         String sourceCurrency = (transaction.getCurrency() != null) ? transaction.getCurrency() : wallet.getCurrency();
         BigDecimal walletNormalizedAmount = currencyService.convertCurrency(
                 sourceCurrency,
@@ -59,7 +60,7 @@ public class TransactionService {
                 transaction.getAmount()
         );
 
-        // Update ledger metrics with the normalized monetary scale based on dynamic direction type
+        // income adds money, everything else subtracts money
         if (transaction.getType() != null && transaction.getType().equalsIgnoreCase("INCOME")) {
             wallet.setBalance(wallet.getBalance().add(walletNormalizedAmount));
         } else {
@@ -77,7 +78,7 @@ public class TransactionService {
             Wallet wallet = walletRepository.findByUserId(user.getId())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Wallet ledger missing for user context"));
 
-            // 1. Convert the old transaction amount to refund the wallet properly
+            // first undo the old transaction's effect on the wallet
             String existingCurrency = (existing.getCurrency() != null) ? existing.getCurrency() : wallet.getCurrency();
             BigDecimal existingNormalizedRefund = currencyService.convertCurrency(
                     existingCurrency,
@@ -85,7 +86,7 @@ public class TransactionService {
                     existing.getAmount()
             );
 
-            // Revert historical balance modifications conditionally based on previous type string state
+            // put the wallet back to where it was before the old transaction
             BigDecimal balanceBeforeOldTransaction;
             if (existing.getType() != null && existing.getType().equalsIgnoreCase("INCOME")) {
                 balanceBeforeOldTransaction = wallet.getBalance().subtract(existingNormalizedRefund);
@@ -93,7 +94,7 @@ public class TransactionService {
                 balanceBeforeOldTransaction = wallet.getBalance().add(existingNormalizedRefund);
             }
 
-            // 2. Convert the newly updated transaction details to calculate the new deduction
+            // then calculate the new transaction amount in wallet currency
             String updatedCurrency = (updatedTransaction.getCurrency() != null) ? updatedTransaction.getCurrency() : wallet.getCurrency();
             BigDecimal newlyNormalizedDeduction = currencyService.convertCurrency(
                     updatedCurrency,
@@ -101,7 +102,7 @@ public class TransactionService {
                     updatedTransaction.getAmount()
             );
 
-            // 3. Commit balance state shifts based on newly incoming transaction type metrics
+            // apply the updated transaction to the wallet balance
             if (updatedTransaction.getType() != null && updatedTransaction.getType().equalsIgnoreCase("INCOME")) {
                 wallet.setBalance(balanceBeforeOldTransaction.add(newlyNormalizedDeduction));
             } else {
@@ -109,9 +110,9 @@ public class TransactionService {
             }
             walletRepository.save(wallet);
 
-            // 4. Update the structural parameters on the persistence tier
+            // store the new transaction fields
             existing.setAmount(updatedTransaction.getAmount());
-            existing.setCurrency(updatedCurrency); // Persist updated currency code
+            existing.setCurrency(updatedCurrency); // persist updated currency code
             existing.setType(updatedTransaction.getType());
             existing.setDate(updatedTransaction.getDate());
             existing.setDescription(updatedTransaction.getDescription());
@@ -133,7 +134,7 @@ public class TransactionService {
     @Transactional
     public Transaction patch(UUID id, Map<String, Object> updates, User user) {
         return repository.findByIdAndUserId(id, user.getId()).map(existing -> {
-            // Note: Patch updates here handle metadata only, avoiding currency conversion calculation rules
+            // patch changes small metadata fields only, so the wallet balance does not need recalculation
             if (updates.containsKey("description")) existing.setDescription((String) updates.get("description"));
             if (updates.containsKey("isRecurrent")) existing.setRecurrent((boolean) updates.get("isRecurrent"));
             if (updates.containsKey("isImpulseBuy")) existing.setImpulseBuy((boolean) updates.get("isImpulseBuy"));
@@ -150,7 +151,7 @@ public class TransactionService {
         Wallet wallet = walletRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Wallet ledger missing for user context"));
 
-        // Convert existing tracking currency amount back to wallet currency before processing the balance refund
+        // convert to wallet currency before undoing this transaction
         String existingCurrency = (existing.getCurrency() != null) ? existing.getCurrency() : wallet.getCurrency();
         BigDecimal refundAmount = currencyService.convertCurrency(
                 existingCurrency,
@@ -158,7 +159,7 @@ public class TransactionService {
                 existing.getAmount()
         );
 
-        // Reverse financial impacts selectively upon deletion depending on transaction configuration parameters
+        // deleting reverses the original balance change
         if (existing.getType() != null && existing.getType().equalsIgnoreCase("INCOME")) {
             wallet.setBalance(wallet.getBalance().subtract(refundAmount));
         } else {

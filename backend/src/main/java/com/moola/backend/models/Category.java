@@ -15,6 +15,7 @@ import java.util.UUID;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+// database object for one spending category, like Food or Rent
 public class Category {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -29,7 +30,7 @@ public class Category {
     private String colorHex;
     private String emoji;
 
-    // Security Fix: Data Ownership
+    // this connects the category to the user who owns it
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;

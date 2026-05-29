@@ -14,6 +14,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/categories")
 @CrossOrigin(origins = "*")
+// exposes category CRUD endpoints use this when explaining GET, POST, PUT, DELETE, and PATCH
 public class CategoryController {
     private final CategoryService categoryService;
     private final UserRepository userRepository;

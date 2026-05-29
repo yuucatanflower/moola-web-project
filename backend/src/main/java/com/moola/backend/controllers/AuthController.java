@@ -13,6 +13,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/auth")
 @CrossOrigin(origins = "*")
+// handles register and login requests, so this is the class to show when explaining authentication
 public class AuthController {
 
     private final AuthService authService;
@@ -29,7 +30,7 @@ public class AuthController {
         user.setUsername(request.getUsername());
         user.setPassword(request.getPassword());
 
-        // ВИПРАВЛЕНО: Безпечна конвертація BigDecimal у double для твоєї моделі User
+        // keep the hourly wage safe even if the frontend sends nothing
         if (request.getHourlyWage() != null) {
             user.setHourlyWage(BigDecimal.valueOf(request.getHourlyWage().doubleValue()));
         } else {
@@ -70,9 +71,7 @@ public class AuthController {
     }
 }
 
-// ==========================================================================
-// DTO Клас (Для стабільності Jackson залишаємо його в цьому пакеті)
-// ==========================================================================
+// small request object used only for registration JSON coming from the frontend
 class RegisterRequest {
     private String username;
     private String password;

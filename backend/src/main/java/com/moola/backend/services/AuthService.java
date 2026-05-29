@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 
 @Service
+// contains the real register/login logic behind AuthController
 public class AuthService {
     private final UserRepository userRepository;
     private final WalletRepository walletRepository;
@@ -28,16 +29,16 @@ public class AuthService {
         this.jwtUtils = jwtUtils;
     }
 
-    @Transactional // atomicity : if wallet not created , user not saved in db
+    @Transactional // if wallet creation fails, the new user is rolled back too
     public User register(User user, BigDecimal initialBalance) {
-        // 1. hashing password
+        // save only the hashed password, never the plain text one
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-        user.setRole("USER"); // prevents escalation
+        user.setRole("USER");
 
-        // 2. save user and get uuid
+        // save the user first so the wallet can point to the user id
         User savedUser = userRepository.save(user);
 
-        // 3. creating default wallet
+        // every new user starts with one default wallet
         BigDecimal balance = initialBalance != null ? initialBalance : BigDecimal.ZERO;
         Wallet defaultWallet = new Wallet(balance, "EUR", savedUser);
         walletRepository.save(defaultWallet);

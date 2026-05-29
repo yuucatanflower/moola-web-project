@@ -1,7 +1,9 @@
 package com.moola.backend;
 
 import com.moola.backend.models.User;
+import com.moola.backend.models.Wallet;
 import com.moola.backend.repositories.UserRepository;
+import com.moola.backend.repositories.WalletRepository; // Added missing import
 import com.moola.backend.security.JwtUtils;
 import com.moola.backend.services.AuthService;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,14 +20,17 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+// tests registration and login rules without using the real database
 public class AuthServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private WalletRepository walletRepository;
 
     @Mock
     private PasswordEncoder passwordEncoder;
@@ -44,7 +49,7 @@ public class AuthServiceTest {
         testUser.setId(UUID.randomUUID());
         testUser.setUsername("testuser");
         testUser.setPassword("rawPassword");
-        testUser.setRole("ADMIN"); // Simulating a hacker trying to inject an admin role
+        testUser.setRole("ADMIN"); // pretend someone tried to sneak in an admin role
     }
 
     @Test
@@ -52,16 +57,19 @@ public class AuthServiceTest {
         when(passwordEncoder.encode("rawPassword")).thenReturn("hashedPassword");
         when(userRepository.save(any(User.class))).thenReturn(testUser);
 
+        when(walletRepository.save(any(Wallet.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
         User result = authService.register(testUser, BigDecimal.valueOf(100.00));
 
-        assertEquals("USER", result.getRole()); // Verifies the privilege escalation patch!
+        assertEquals("USER", result.getRole());
         assertEquals("hashedPassword", result.getPassword());
         verify(userRepository, times(1)).save(testUser);
+        verify(walletRepository, times(1)).save(any(Wallet.class)); // verify safe wallet allocation execution
     }
 
     @Test
     void login_WithValidCredentials_ShouldReturnToken() {
-        testUser.setPassword("hashedPassword"); // Database state
+        testUser.setPassword("hashedPassword");
 
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
         when(passwordEncoder.matches("rawPassword", "hashedPassword")).thenReturn(true);
