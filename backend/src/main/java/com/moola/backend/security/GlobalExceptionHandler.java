@@ -8,7 +8,8 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.HashMap;
 import java.util.Map;
 
-@ControllerAdvice // Intercepts all runtime exceptions thrown across any controller class automatically
+@ControllerAdvice
+// turns selected backend errors into small JSON responses that are easier for the frontend to read
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(ResponseStatusException.class)
@@ -16,7 +17,7 @@ public class GlobalExceptionHandler {
         Map<String, String> errorBody = new HashMap<>();
         errorBody.put("error", ex.getReason());
 
-        // This forces Spring to extract the precise status code (like 404) and assign it to the HTTP header
+        // keep the original HTTP status, like 404 for not found
         return new ResponseEntity<>(errorBody, ex.getStatusCode());
     }
 }

@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+// database helper for transactions most methods include userId so data stays private per user
 public interface TransactionRepository extends JpaRepository<Transaction, UUID> {
     List<Transaction> findByCategoryIdAndUserId(UUID categoryId, UUID userId);
     List<Transaction> findAllByUserId(UUID userId);

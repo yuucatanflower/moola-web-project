@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @Service
+// business logic for categories, including checking that users only touch their own categories
 public class CategoryService {
     private final CategoryRepository categoryRepository;
     private final TransactionRepository transactionRepository;

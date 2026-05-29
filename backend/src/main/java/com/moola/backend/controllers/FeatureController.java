@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/features")
 @CrossOrigin(origins = "*")
+// groups extra features that call outside services, like AI advice and currency conversion
 public class FeatureController {
     private final AIService aiService;
     private final CurrencyService currencyService;
@@ -36,7 +37,7 @@ public class FeatureController {
         User user = userRepository.findByUsername(principal.getName()).orElseThrow();
         LocalDate cutoffDate = LocalDate.now().minusDays(days);
 
-        // Security Fix: Fetch ONLY the authenticated user's transactions
+        // only read transactions belonging to the logged-in user
         List<Transaction> transactions = transactionRepository.findAllByUserIdAndDateAfter(user.getId(), cutoffDate);
 
         if (transactions.isEmpty()) {
@@ -45,7 +46,7 @@ public class FeatureController {
 
         String dataSummary = transactions.stream()
                 .map(t -> {
-                    // Security Fix: Sanitize description to prevent prompt injection
+                    // clean the description before sending it to the AI service
                     String safeDesc = t.getDescription() != null ?
                             t.getDescription().replaceAll("[^a-zA-Z0-9 ]", "").substring(0, Math.min(t.getDescription().length(), 20))
                             : "No details";

@@ -14,6 +14,7 @@ import java.security.Principal;
 @RestController
 @RequestMapping("/api/wallet")
 @CrossOrigin(origins = "*")
+// gives the logged-in user their wallet balance and currency
 public class WalletController {
 
     private final WalletRepository walletRepository;
@@ -26,11 +27,11 @@ public class WalletController {
 
     @GetMapping
     public ResponseEntity<Wallet> getWallet(Principal principal) {
-        // Find user by authenticated security context
+        // find the user from the JWT security context
         User user = userRepository.findByUsername(principal.getName())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User context invalid"));
 
-        // Fetch user's dedicated wallet layout metrics
+        // load the wallet that belongs to this user
         Wallet wallet = walletRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Wallet ledger missing for user context"));
 

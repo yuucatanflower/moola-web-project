@@ -17,6 +17,7 @@ import java.util.UUID;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+// database object for one income or expense entry
 public class Transaction {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -28,7 +29,7 @@ public class Transaction {
     @Column(nullable = false)
     private BigDecimal amount;
 
-    // Added: Explicit currency tracking column for multi-currency tracking support
+    // stores the currency used when the transaction was entered
     @Column(nullable = false, length = 3)
     private String currency = "EUR";
 
@@ -54,7 +55,7 @@ public class Transaction {
     @JoinColumn(name = "category_id", nullable = true)
     private Category category;
 
-    // Security Fix: Data Ownership
+    // this connects the transaction to the user who owns it
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;

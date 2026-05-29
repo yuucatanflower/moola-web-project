@@ -8,6 +8,7 @@ import java.security.Key;
 import java.util.Date;
 
 @Component
+// small helper for creating and checking JWT tokens
 public class JwtUtils {
 
     @Value("${jwt.secret}")

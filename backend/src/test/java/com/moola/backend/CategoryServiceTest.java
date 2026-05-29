@@ -23,6 +23,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+// tests category logic, especially that categories belong to the right user
 public class CategoryServiceTest {
 
     @Mock
@@ -110,11 +111,11 @@ public class CategoryServiceTest {
 
         categoryService.deleteCategory(categoryId, testUser);
 
-        // Verify the transaction was updated to have no category
+        // transactions keep existing, but lose the deleted category
         assertNull(mockTransaction.getCategory());
         verify(transactionRepository, times(1)).save(mockTransaction);
 
-        // Verify the category was deleted
+        // the category itself is removed after unlinking transactions
         verify(categoryRepository, times(1)).delete(testCategory);
     }
 }

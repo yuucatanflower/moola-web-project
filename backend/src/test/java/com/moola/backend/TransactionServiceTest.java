@@ -1,10 +1,14 @@
-package com.moola.backend.services;
+package com.moola.backend;
 
 import com.moola.backend.models.Category;
 import com.moola.backend.models.Transaction;
 import com.moola.backend.models.User;
+import com.moola.backend.models.Wallet;
 import com.moola.backend.repositories.CategoryRepository;
 import com.moola.backend.repositories.TransactionRepository;
+import com.moola.backend.repositories.WalletRepository;
+import com.moola.backend.services.CurrencyService;
+import com.moola.backend.services.TransactionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,12 +34,19 @@ public class TransactionServiceTest {
     @Mock
     private CategoryRepository categoryRepository;
 
+    @Mock
+    private WalletRepository walletRepository;
+
+    @Mock
+    private CurrencyService currencyService;
+
     @InjectMocks
     private TransactionService transactionService;
 
     private User testUser;
     private Category testCategory;
     private Transaction testTransaction;
+    private Wallet testWallet;
     private UUID userId;
     private UUID categoryId;
     private UUID transactionId;
@@ -54,10 +65,17 @@ public class TransactionServiceTest {
         testCategory.setId(categoryId);
         testCategory.setUser(testUser);
 
+        testWallet = new Wallet(); // Initialize target user wallet
+        testWallet.setId(1L);
+        testWallet.setBalance(new BigDecimal("1000.00"));
+        testWallet.setCurrency("EUR");
+        testWallet.setUser(testUser);
+
         testTransaction = new Transaction();
         testTransaction.setId(transactionId);
         testTransaction.setAmount(new BigDecimal("50.00"));
         testTransaction.setType("expense");
+        testTransaction.setCurrency("EUR");
         testTransaction.setDate(LocalDate.now());
         testTransaction.setUser(testUser);
         testTransaction.setCategory(testCategory);
@@ -76,22 +94,28 @@ public class TransactionServiceTest {
 
     @Test
     void create_WithValidCategory_ShouldSaveTransaction() {
+        // Mock dependencies introduced during wallet/currency service upgrades
         when(categoryRepository.findByIdAndUserId(categoryId, userId)).thenReturn(Optional.of(testCategory));
+        when(walletRepository.findByUserId(userId)).thenReturn(Optional.of(testWallet));
+        when(currencyService.convertCurrency(any(), any(), any())).thenReturn(new BigDecimal("50.00"));
         when(transactionRepository.save(any(Transaction.class))).thenReturn(testTransaction);
 
         Transaction newTx = new Transaction();
+        newTx.setAmount(new BigDecimal("50.00"));
+        newTx.setType("expense");
         newTx.setCategory(testCategory);
 
         Transaction result = transactionService.create(newTx, testUser);
 
+        assertNotNull(result);
         assertEquals(testUser, result.getUser());
         assertEquals(testCategory, result.getCategory());
         verify(transactionRepository, times(1)).save(newTx);
+        verify(walletRepository, times(1)).save(testWallet); // Verifies ledger calculations commit state shifts
     }
 
     @Test
     void create_WithForeignCategory_ShouldThrowException() {
-        // Simulating an IDOR attempt: user tries to attach a category they don't own
         when(categoryRepository.findByIdAndUserId(categoryId, userId)).thenReturn(Optional.empty());
 
         Transaction newTx = new Transaction();

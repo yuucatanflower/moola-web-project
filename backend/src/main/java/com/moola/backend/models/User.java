@@ -15,6 +15,7 @@ import java.util.UUID;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+// database object for an app user login and wallet data starts here
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
