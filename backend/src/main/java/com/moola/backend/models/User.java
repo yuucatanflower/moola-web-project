@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.JdbcTypeCode;
 
+import java.math.BigDecimal;
 import java.sql.Types;
 import java.util.UUID;
 
@@ -30,5 +31,11 @@ public class User {
     private String role = "USER";
 
     @Column(nullable = false)
-    private double hourlyWage = 15.0;
+    private BigDecimal hourlyWage = BigDecimal.valueOf(15.0);
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private Wallet wallet;
+
+    public Wallet getWallet() { return wallet; }
+    public void setWallet(Wallet wallet) { this.wallet = wallet; }
 }

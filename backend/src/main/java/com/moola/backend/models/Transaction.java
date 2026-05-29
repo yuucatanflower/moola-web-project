@@ -28,6 +28,10 @@ public class Transaction {
     @Column(nullable = false)
     private BigDecimal amount;
 
+    // Added: Explicit currency tracking column for multi-currency tracking support
+    @Column(nullable = false, length = 3)
+    private String currency = "EUR";
+
     @Column(nullable = false)
     private String type;
 

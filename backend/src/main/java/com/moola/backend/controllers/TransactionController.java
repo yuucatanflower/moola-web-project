@@ -5,6 +5,7 @@ import com.moola.backend.models.User;
 import com.moola.backend.repositories.UserRepository;
 import com.moola.backend.services.TransactionService;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import java.security.Principal;
 import java.util.List;
@@ -43,8 +44,20 @@ public class TransactionController {
     }
 
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable UUID id, Principal principal) {
-        transactionService.delete(id, getAuthenticatedUser(principal));
+    public void delete(@PathVariable String id, Principal principal) { // Intercept as String
+        java.util.UUID transactionUuid;
+
+        try {
+            // Safe validation step
+            transactionUuid = java.util.UUID.fromString(id);
+        } catch (IllegalArgumentException e) {
+            // If it isn't a valid UUID string structure, instantly drop a 404 instead of a 400
+            throw new org.springframework.web.server.ResponseStatusException(
+                    HttpStatus.NOT_FOUND, "Transaction ID structure is invalid or not found."
+            );
+        }
+
+        transactionService.delete(transactionUuid, getAuthenticatedUser(principal));
     }
 
     @PatchMapping("/{id}")

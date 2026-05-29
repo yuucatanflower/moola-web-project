@@ -3,14 +3,20 @@ package com.moola.backend.security;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.util.HashMap;
 import java.util.Map;
 
-@ControllerAdvice
+@ControllerAdvice // Intercepts all runtime exceptions thrown across any controller class automatically
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<?> handleRuntimeException(RuntimeException e) {
-        //the actual error message in Swagger instead of just '500'
-        return ResponseEntity.status(400).body(Map.of("error", e.getMessage()));
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<Map<String, String>> handleResponseStatusException(ResponseStatusException ex) {
+        Map<String, String> errorBody = new HashMap<>();
+        errorBody.put("error", ex.getReason());
+
+        // This forces Spring to extract the precise status code (like 404) and assign it to the HTTP header
+        return new ResponseEntity<>(errorBody, ex.getStatusCode());
     }
 }
