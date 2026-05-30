@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import AuthPanel from "./components/auth/AuthPanel";
 import Dashboard from "./components/dashboard/Dashboard";
+import Home from "./components/dashboard/Home";
 import { EMPTY_AUTH_FORM } from "./constants/auth";
 import { fetchTransactions, loginUser, registerUser } from "./services/api";
 import { buildSession, clearSession, readStoredSession, saveSession } from "./utils/session";
@@ -17,6 +18,9 @@ function App() {
     loading: false,
     error: "",
   });
+
+  // Track the active view tab ("home" or "dashboard")
+  const [activeTab, setActiveTab] = useState("home");
 
   useEffect(() => {
     if (!session?.accessToken) {
@@ -117,17 +121,59 @@ function App() {
       type: "success",
       text: "You are logged out on this browser.",
     });
+    // Reset back to the home view upon logging out
+    setActiveTab("home");
+  };
+
+  // Callback to append locally added expenses from the Home form directly into the app state
+  const handleAddTransaction = (newTx) => {
+    setTransactions((prev) => [newTx, ...prev]);
   };
 
   return (
     <div className="grid min-h-screen place-items-center bg-[radial-gradient(circle_at_22%_10%,rgba(126,255,175,0.18),transparent_28rem),radial-gradient(circle_at_82%_82%,rgba(222,255,154,0.10),transparent_30rem),linear-gradient(145deg,#020302_0%,#071108_48%,#020302_100%)] p-[clamp(18px,4vw,48px)] font-sans text-[#daffde]">
       {session ? (
-        <Dashboard
-          onLogout={handleLogout}
-          session={session}
-          transactions={transactions}
-          transactionsState={transactionsState}
-        />
+        <div className="flex w-full max-w-[1200px] flex-col items-center">
+          
+          {/* Top Navigation Bar */}
+          <nav className="mb-6 flex w-full gap-6 border-b border-[#1a1a1a] px-4 pb-2 self-start">
+            <button
+              onClick={() => setActiveTab("home")}
+              className={`flex items-center gap-2 pb-2 text-lg font-bold transition-colors duration-150 ${
+                activeTab === "home" 
+                  ? "text-white border-b-2 border-[#DEFF9A]" 
+                  : "text-gray-500 hover:text-white"
+              }`}
+            >
+              🏠 Home
+            </button>
+            <button
+              onClick={() => setActiveTab("dashboard")}
+              className={`flex items-center gap-2 pb-2 text-lg font-bold transition-colors duration-150 ${
+                activeTab === "dashboard" 
+                  ? "text-white border-b-2 border-[#DEFF9A]" 
+                  : "text-gray-500 hover:text-white"
+              }`}
+            >
+              📊 Dashboard
+            </button>
+          </nav>
+
+          {/* Core App View Router */}
+          <div className="w-full">
+            {activeTab === "home" ? (
+              <Home onAddTransaction={handleAddTransaction} />
+            ) : (
+              <Dashboard
+                onLogout={handleLogout}
+                session={session}
+                transactions={transactions}
+                transactionsState={transactionsState}
+              />
+            )}
+          </div>
+
+        </div>
       ) : (
         <AuthPanel
           authMode={authMode}
