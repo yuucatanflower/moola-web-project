@@ -4,4 +4,5 @@ export const EMPTY_AUTH_FORM = {
   username: "",
   password: "",
   hourlyWage: "15",
+  currentBalance: "0",
 };

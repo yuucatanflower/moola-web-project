@@ -3,11 +3,12 @@ import { formatAmount } from "../../utils/formatters";
 function AccountMeta({ session }) {
   const hourlyWage =
     session.user.hourlyWage == null ? "Not returned by login" : formatAmount(session.user.hourlyWage);
+  const currentBalance =
+    session.user.currentBalance == null ? "Not returned by login" : formatAmount(session.user.currentBalance);
 
   const facts = [
-    ["Role", session.user.role],
+    ["Current balance", currentBalance],
     ["Hourly wage", hourlyWage],
-    ["Session Status", "JWT Secured"],
   ];
 
   return (

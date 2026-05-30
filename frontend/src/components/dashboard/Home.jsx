@@ -1,38 +1,49 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import BrandMark from "../common/BrandMark";
+import { createTransaction } from "../../services/api";
 
-function Home({ onAddTransaction }) {
+function Home({ onAddTransaction, token }) {
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
   const [impulseBuy, setImpulseBuy] = useState(false);
   const [regret, setRegret] = useState(false);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!description || !amount) return;
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    // Construct transaction data object
-    const newTransaction = {
-      id: Date.now(),
-      description,
-      amount: parseFloat(amount),
-      impulseBuy,
-      regret,
-      date: new Date().toISOString(),
-    };
+  if (!description || !amount) return;
 
-    onAddTransaction(newTransaction);
+ const newTransaction = {
+  description,
+  amount: parseFloat(amount),
+  type: "EXPENSE",
+  currency: "EUR",
+  date: new Date().toISOString().split("T")[0],
 
-    // Reset component form state
+  isImpulseBuy: impulseBuy,
+  isRecurrent: false,
+  isRegret: regret,
+};
+
+  try {
+    const savedTransaction = await createTransaction(
+      token,
+      newTransaction
+    );
+
+    onAddTransaction(savedTransaction);
+
     setDescription("");
     setAmount("");
     setImpulseBuy(false);
     setRegret(false);
-  };
+  } catch (error) {
+    console.error("Failed to save transaction:", error);
+  }
+};
 
   return (
-    <div className="w-full max-w-[1200px] overflow-hidden rounded-3xl border border-[#202020] bg-[radial-gradient(circle_at_18%_5%,rgba(126,255,175,0.10),transparent_23rem),linear-gradient(145deg,rgba(12,22,13,0.96),rgba(0,0,0,0.94)_52%,rgba(6,14,7,0.96))] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.6)] sm:p-10">
-
+   <div className="w-full overflow-hidden rounded-3xl border border-[#202020] bg-[radial-gradient(circle_at_18%_5%,rgba(126,255,175,0.10),transparent_23rem),linear-gradient(145deg,rgba(12,22,13,0.96),rgba(0,0,0,0.94)_52%,rgba(6,14,7,0.96))] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.6)] sm:p-10">
       <header className="mb-8 flex items-end justify-between gap-5 border-b border-[#1a1a1a] pb-6 max-md:flex-col max-md:items-start">
         <div>
           <BrandMark />
@@ -43,7 +54,7 @@ function Home({ onAddTransaction }) {
       </header>
 
       {/* Grid structure exactly mirrors the minmax layout of Dashboard.jsx */}
-      <main className="grid gap-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(300px,0.65fr)]">
+      <main className="grid gap-6 lg:grid-cols-[2fr_1fr]">
 
         <section className="rounded-[20px] border border-[#222] bg-[#0a0a0a] p-5 sm:p-8">
           <div className="mb-6">

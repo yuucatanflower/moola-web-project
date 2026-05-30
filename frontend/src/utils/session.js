@@ -18,7 +18,13 @@ export const clearSession = () => {
   localStorage.removeItem(SESSION_KEY);
 };
 
-export const buildSession = ({ accessToken, loginUserObj, registeredUser, username }) => {
+export const buildSession = ({
+  accessToken,
+  currentBalance,
+  loginUserObj,
+  registeredUser,
+  username,
+}) => {
   const currentUser = loginUserObj || registeredUser;
 
   return {
@@ -28,6 +34,10 @@ export const buildSession = ({ accessToken, loginUserObj, registeredUser, userna
       username: currentUser?.username ?? username,
       role: currentUser?.role ?? "USER",
       hourlyWage: currentUser?.hourlyWage == null ? null : Number(currentUser.hourlyWage),
+      currentBalance:
+        currentUser?.currentBalance == null
+          ? Number(currentBalance ?? 0)
+          : Number(currentUser.currentBalance),
     },
   };
 };

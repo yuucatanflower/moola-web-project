@@ -37,7 +37,12 @@ export const loginUser = async ({ username, password }) =>
     body: JSON.stringify({ username, password }),
   });
 
-export const registerUser = async ({ username, password, hourlyWage }) =>
+export const registerUser = async ({
+  username,
+  password,
+  hourlyWage,
+  startingBalance,
+}) =>
   request("/auth/register", {
     method: "POST",
     headers: {
@@ -47,6 +52,7 @@ export const registerUser = async ({ username, password, hourlyWage }) =>
       username,
       password,
       hourlyWage,
+      startingBalance,
     }),
   });
 
@@ -67,3 +73,13 @@ export const fetchAiAdvice = async (token, days = 30) =>
       "Content-Type": "application/json",
     },
   });
+export const createTransaction = async (token, transaction) =>
+  request("/transactions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(transaction),
+  });
+  

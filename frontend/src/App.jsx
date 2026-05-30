@@ -81,20 +81,23 @@ function App() {
       let registeredUser = null;
 
       if (authMode === "register") {
-        registeredUser = await registerUser({
-          ...credentials,
-          hourlyWage: Number(authForm.hourlyWage),
-        });
+      registeredUser = await registerUser({
+  ...credentials,
+  hourlyWage: Number(authForm.hourlyWage),
+  startingBalance: Number(authForm.currentBalance || 0),
+});
       }
 
       const loginResponse = await loginUser(credentials);
 
       const nextSession = buildSession({
         accessToken: loginResponse.accessToken,
+        currentBalance: authForm.currentBalance,
         loginUserObj: loginResponse.user,
         registeredUser,
         username: credentials.username,
       });
+      console.log("SESSION:", nextSession);
 
       saveSession(nextSession);
       setSession(nextSession);
@@ -133,7 +136,7 @@ function App() {
   return (
     <div className="grid min-h-screen place-items-center bg-[radial-gradient(circle_at_22%_10%,rgba(126,255,175,0.18),transparent_28rem),radial-gradient(circle_at_82%_82%,rgba(222,255,154,0.10),transparent_30rem),linear-gradient(145deg,#020302_0%,#071108_48%,#020302_100%)] p-[clamp(18px,4vw,48px)] font-sans text-[#daffde]">
       {session ? (
-        <div className="flex w-full max-w-[1200px] flex-col items-center">
+        <div className="flex w-full flex-col items-center">
           
           {/* Top Navigation Bar */}
           <nav className="mb-6 flex w-full gap-6 border-b border-[#1a1a1a] px-4 pb-2 self-start">
@@ -162,7 +165,10 @@ function App() {
           {/* Core App View Router */}
           <div className="w-full">
             {activeTab === "home" ? (
-              <Home onAddTransaction={handleAddTransaction} />
+              <Home
+  onAddTransaction={handleAddTransaction}
+  token={session.accessToken}
+/>
             ) : (
               <Dashboard
                 onLogout={handleLogout}
@@ -188,5 +194,4 @@ function App() {
     </div>
   );
 }
-
 export default App;
