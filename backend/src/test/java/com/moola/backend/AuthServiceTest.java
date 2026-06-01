@@ -104,4 +104,24 @@ public class AuthServiceTest {
 
         assertEquals("User not found", exception.getMessage());
     }
+
+    @Test
+    void register_WithNullStartingBalance_ShouldDefaultWalletToZero() {
+        // Arrange
+        when(passwordEncoder.encode("rawPassword")).thenReturn("hashedPassword");
+        when(userRepository.save(any(User.class))).thenReturn(testUser);
+
+        // Capture the wallet passed to walletRepository.save() to inspect its initial balance state
+        when(walletRepository.save(any(Wallet.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // Act
+        // Passing null as the initial balance argument to trigger the fallback filter condition
+        User result = authService.register(testUser, null);
+
+        // Assert
+        assertNotNull(result);
+        verify(walletRepository, times(1)).save(argThat(wallet ->
+                wallet.getBalance().compareTo(BigDecimal.ZERO) == 0 && "EUR".equals(wallet.getCurrency())
+        ));
+    }
 }
