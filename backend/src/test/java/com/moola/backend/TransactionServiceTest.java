@@ -150,4 +150,57 @@ public class TransactionServiceTest {
             transactionService.delete(transactionId, testUser);
         });
     }
+
+    @Test
+    void create_WithIncomeType_ShouldIncreaseWalletBalance() {
+        // Arrange
+        BigDecimal startingBalance = new BigDecimal("1000.00");
+        BigDecimal incomeAmount = new BigDecimal("500.00");
+        testWallet.setBalance(startingBalance);
+
+        when(walletRepository.findByUserId(userId)).thenReturn(Optional.of(testWallet));
+        when(currencyService.convertCurrency("EUR", "EUR", incomeAmount)).thenReturn(incomeAmount);
+        when(transactionRepository.save(any(Transaction.class))).thenReturn(testTransaction);
+
+        Transaction incomeTx = new Transaction();
+        incomeTx.setAmount(incomeAmount);
+        incomeTx.setType("INCOME"); // Explicitly setting type to INCOME
+        incomeTx.setCurrency("EUR");
+
+        // Act
+        transactionService.create(incomeTx, testUser);
+
+        // Assert
+        // Starting 1000.00 + Income 500.00 = 1500.00
+        assertEquals(new BigDecimal("1500.00"), testWallet.getBalance());
+        verify(walletRepository, times(1)).save(testWallet);
+    }
+
+    @Test
+    void create_WithForeignCurrency_ShouldApplyExchangeRateBeforeDeducting() {
+        // Arrange
+        BigDecimal startingBalance = new BigDecimal("1000.00");
+        BigDecimal usdAmount = new BigDecimal("100.00");
+        BigDecimal convertedEurAmount = new BigDecimal("90.00"); // Simulated FX Conversion Rate (100 USD = 90 EUR)
+        testWallet.setBalance(startingBalance);
+
+        when(walletRepository.findByUserId(userId)).thenReturn(Optional.of(testWallet));
+        // Mock CurrencyService to return the converted EUR amount when fed USD input parameters
+        when(currencyService.convertCurrency("USD", "EUR", usdAmount)).thenReturn(convertedEurAmount);
+        when(transactionRepository.save(any(Transaction.class))).thenReturn(testTransaction);
+
+        Transaction foreignTx = new Transaction();
+        foreignTx.setAmount(usdAmount);
+        foreignTx.setType("EXPENSE");
+        foreignTx.setCurrency("USD"); // Explicitly setting currency to USD
+
+        // Act
+        transactionService.create(foreignTx, testUser);
+
+        // Assert
+        // Starting 1000.00 - Converted Expense 90.00 = 910.00
+        assertEquals(new BigDecimal("910.00"), testWallet.getBalance());
+        verify(currencyService, times(1)).convertCurrency("USD", "EUR", usdAmount);
+        verify(walletRepository, times(1)).save(testWallet);
+    }
 }
