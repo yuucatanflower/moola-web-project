@@ -20,8 +20,8 @@ public class Category {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(columnDefinition = "VARCHAR(36)", updatable = false, nullable = false)
-    @JdbcTypeCode(Types.VARCHAR)
-    private UUID id;
+    @org.hibernate.annotations.JdbcTypeCode(java.sql.Types.VARCHAR)
+    private java.util.UUID id; //
 
     @NotBlank(message = "Category name cannot be empty")
     @Column(nullable = false)
