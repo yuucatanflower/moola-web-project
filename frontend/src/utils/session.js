@@ -33,11 +33,17 @@ export const buildSession = ({
       id: currentUser?.id ?? null,
       username: currentUser?.username ?? username,
       role: currentUser?.role ?? "USER",
-      hourlyWage: currentUser?.hourlyWage == null ? null : Number(currentUser.hourlyWage),
-      currentBalance:
-        currentUser?.currentBalance == null
-          ? Number(currentBalance ?? 0)
-          : Number(currentUser.currentBalance),
+      hourlyWage:
+        currentUser?.hourlyWage == null
+          ? null
+          : Number(currentUser.hourlyWage),
+
+      currentBalance: Number(
+        currentUser?.balance ??
+        currentUser?.currentBalance ??
+        currentBalance ??
+        0
+      ),
     },
   };
 };
