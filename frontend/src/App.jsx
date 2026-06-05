@@ -12,6 +12,8 @@ import {
 } from "./services/api";
 import { buildSession, clearSession, readStoredSession, saveSession } from "./utils/session";
 import "./index.css";
+import AdminPanel from "./components/dashboard/AdminPanel";
+
 
 const getTransactionBalanceDelta = (transaction) => {
   const amount = Number(transaction.amount ?? 0);
@@ -32,6 +34,7 @@ function App() {
     error: "",
   });
   const [activeTab, setActiveTab] = useState("home");
+  const isAdminPage = window.location.pathname === "/admin";
 
   useEffect(() => {
     if (!session?.accessToken) {
@@ -212,6 +215,13 @@ function App() {
       )
     );
   };
+  if (isAdminPage) {
+  return (
+    <div className="grid min-h-screen place-items-center bg-[radial-gradient(circle_at_22%_10%,rgba(126,255,175,0.18),transparent_28rem),radial-gradient(circle_at_82%_82%,rgba(222,255,154,0.10),transparent_30rem),linear-gradient(145deg,#020302_0%,#071108_48%,#020302_100%)] p-[clamp(18px,4vw,48px)] font-sans text-[#daffde]">
+      <AdminPanel />
+    </div>
+  );
+}
 
   return (
     <div className="grid min-h-screen place-items-center bg-[radial-gradient(circle_at_22%_10%,rgba(126,255,175,0.18),transparent_28rem),radial-gradient(circle_at_82%_82%,rgba(222,255,154,0.10),transparent_30rem),linear-gradient(145deg,#020302_0%,#071108_48%,#020302_100%)] p-[clamp(18px,4vw,48px)] font-sans text-[#daffde]">

@@ -103,3 +103,31 @@ export const deleteTransaction = async (token, id) =>
       "Content-Type": "application/json",
     },
   });
+  export const fetchUsers = async (adminPassword) =>
+  request("/admin/users", {
+    method: "GET",
+    headers: {
+      "X-ADMIN-PASSWORD": adminPassword,
+      "Content-Type": "application/json",
+    },
+  });
+
+export const deleteUser = async (adminPassword, userId) =>
+  request(`/admin/users/${userId}`, {
+    method: "DELETE",
+    headers: {
+      "X-ADMIN-PASSWORD": adminPassword,
+      "Content-Type": "application/json",
+    },
+  });
+export const updateUser = async (adminPassword, userId, username) =>
+  request(`/admin/users/${userId}`, {
+    method: "PUT",
+    headers: {
+      "X-ADMIN-PASSWORD": adminPassword,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      username,
+    }),
+  });

@@ -32,7 +32,14 @@ function AuthPanel({
   };
 
   return (
-    <section className="grid min-h-[min(760px,calc(100vh-36px))] w-full max-w-[1200px] items-center gap-8 rounded-3xl border border-[#202020] bg-[radial-gradient(circle_at_18%_8%,rgba(126,255,175,0.12),transparent_22rem),linear-gradient(145deg,rgba(11,22,12,0.96),rgba(0,0,0,0.94)_48%,rgba(6,14,7,0.96))] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.6)] sm:p-10 lg:grid-cols-[minmax(0,1fr)_minmax(320px,440px)] lg:gap-16 xl:p-[72px]">
+    <section className="relative grid min-h-[min(760px,calc(100vh-36px))] w-full max-w-[1200px] items-center gap-8 rounded-3xl border border-[#202020] bg-[radial-gradient(circle_at_18%_8%,rgba(126,255,175,0.12),transparent_22rem),linear-gradient(145deg,rgba(11,22,12,0.96),rgba(0,0,0,0.94)_48%,rgba(6,14,7,0.96))] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.6)] sm:p-10 lg:grid-cols-[minmax(0,1fr)_minmax(320px,440px)] lg:gap-16 xl:p-[72px]">
+      <button
+  type="button"
+  onClick={() => (window.location.href = "/admin")}
+  className="absolute right-6 top-6 rounded-lg border border-[#2b2b2b] bg-[#0b0b0b] px-3 py-2 text-lg transition hover:border-[#deff9a] hover:scale-105"
+>
+  💥
+</button>
       <div className="max-w-xl">
         <BrandMark />
         <h1 className="my-5 max-w-[12ch] text-[clamp(2.25rem,5vw,5.3rem)] font-extrabold leading-none text-white">
