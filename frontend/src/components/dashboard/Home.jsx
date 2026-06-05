@@ -1,49 +1,51 @@
 import { useState } from "react";
-import BrandMark from "../common/BrandMark";
 import { createTransaction } from "../../services/api";
+import BrandMark from "../common/BrandMark";
 
 function Home({ onAddTransaction, token }) {
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
   const [impulseBuy, setImpulseBuy] = useState(false);
   const [regret, setRegret] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setSubmitError("");
 
-  if (!description || !amount) return;
+    if (!description.trim() || !amount) {
+      return;
+    }
 
- const newTransaction = {
-  description,
-  amount: parseFloat(amount),
-  type: "EXPENSE",
-  currency: "EUR",
-  date: new Date().toISOString().split("T")[0],
+    const newTransaction = {
+      amount: Number(amount),
+      currency: "EUR",
+      date: new Date().toISOString().split("T")[0],
+      description: description.trim(),
+      impulseBuy,
+      isImpulseBuy: impulseBuy,
+      isRecurrent: false,
+      isRegret: regret,
+      recurrent: false,
+      regret,
+      type: "EXPENSE",
+    };
 
-  isImpulseBuy: impulseBuy,
-  isRecurrent: false,
-  isRegret: regret,
-};
+    try {
+      const savedTransaction = await createTransaction(token, newTransaction);
 
-  try {
-    const savedTransaction = await createTransaction(
-      token,
-      newTransaction
-    );
-
-    onAddTransaction(savedTransaction);
-
-    setDescription("");
-    setAmount("");
-    setImpulseBuy(false);
-    setRegret(false);
-  } catch (error) {
-    console.error("Failed to save transaction:", error);
-  }
-};
+      onAddTransaction(savedTransaction);
+      setDescription("");
+      setAmount("");
+      setImpulseBuy(false);
+      setRegret(false);
+    } catch (error) {
+      setSubmitError(error.message || "Failed to save transaction.");
+    }
+  };
 
   return (
-   <div className="w-full overflow-hidden rounded-3xl border border-[#202020] bg-[radial-gradient(circle_at_18%_5%,rgba(126,255,175,0.10),transparent_23rem),linear-gradient(145deg,rgba(12,22,13,0.96),rgba(0,0,0,0.94)_52%,rgba(6,14,7,0.96))] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.6)] sm:p-10">
+    <div className="w-full overflow-hidden rounded-3xl border border-[#202020] bg-[radial-gradient(circle_at_18%_5%,rgba(126,255,175,0.10),transparent_23rem),linear-gradient(145deg,rgba(12,22,13,0.96),rgba(0,0,0,0.94)_52%,rgba(6,14,7,0.96))] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.6)] sm:p-10">
       <header className="mb-8 flex items-end justify-between gap-5 border-b border-[#1a1a1a] pb-6 max-md:flex-col max-md:items-start">
         <div>
           <BrandMark />
@@ -53,9 +55,7 @@ const handleSubmit = async (e) => {
         </div>
       </header>
 
-      {/* Grid structure exactly mirrors the minmax layout of Dashboard.jsx */}
       <main className="grid gap-6 lg:grid-cols-[2fr_1fr]">
-
         <section className="rounded-[20px] border border-[#222] bg-[#0a0a0a] p-5 sm:p-8">
           <div className="mb-6">
             <h2 className="m-0 text-[1.35rem] font-bold text-white">Log Expense</h2>
@@ -64,73 +64,82 @@ const handleSubmit = async (e) => {
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+          <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold uppercase text-[#daffde]/55">Vendor Description</label>
+              <label className="text-xs font-bold uppercase text-[#daffde]/55">
+                Vendor Description
+              </label>
               <input
-                type="text"
-                placeholder="e.g., Netflix Subscription, Starbucks Coffee"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
                 className="min-h-12 w-full rounded-[10px] border border-[#2b2b2b] bg-[#0b0b0b] px-4 text-base font-medium text-white placeholder-gray-600 transition focus:border-[#deff9a]/55 focus:outline-none"
+                onChange={(event) => setDescription(event.target.value)}
+                placeholder="e.g., Netflix Subscription, Starbucks Coffee"
+                type="text"
+                value={description}
               />
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold uppercase text-[#daffde]/55">Amount (€)</label>
+              <label className="text-xs font-bold uppercase text-[#daffde]/55">
+                Amount (EUR)
+              </label>
               <input
-                type="number"
-                step="0.01"
-                placeholder="0.00"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
                 className="min-h-12 w-full rounded-[10px] border border-[#2b2b2b] bg-[#0b0b0b] px-4 text-base font-medium text-white placeholder-gray-600 transition focus:border-[#deff9a]/55 focus:outline-none"
+                onChange={(event) => setAmount(event.target.value)}
+                placeholder="0.00"
+                step="0.01"
+                type="number"
+                value={amount}
               />
             </div>
 
             <button
-              type="submit"
               className="mt-2 min-h-12 w-full rounded-[10px] bg-[#DEFF9A] px-6 text-base font-bold text-black transition hover:bg-white hover:shadow-[0_0_15px_rgba(222,255,154,0.4)]"
+              type="submit"
             >
               Save Transaction
             </button>
+
+            {submitError ? (
+              <p className="m-0 rounded-xl border border-red-300/35 bg-[#050505] px-3.5 py-3 text-sm font-bold leading-6 text-red-200">
+                {submitError}
+              </p>
+            ) : null}
           </form>
         </section>
 
-        {/* Content alignment using content-start matches the right-hand panel heights exactly */}
         <section className="grid min-w-0 content-start gap-6 rounded-[20px] border border-[#222] bg-[#0a0a0a] p-5 sm:p-8">
           <div>
-            <h2 className="m-0 text-[1.35rem] font-bold text-white mb-4">Behavioral Tags</h2>
-            <p className="text-sm font-medium text-[#daffde]/55 leading-relaxed mb-6">
-              Flag habits instantly. Checked items apply dynamic visual metrics across your ledger dashboards.
+            <h2 className="m-0 mb-4 text-[1.35rem] font-bold text-white">Behavioral Tags</h2>
+            <p className="mb-6 text-sm font-medium leading-relaxed text-[#daffde]/55">
+              Flag habits instantly. Checked items apply dynamic visual metrics across your
+              ledger dashboards.
             </p>
           </div>
 
           <div className="flex flex-col gap-4">
             <label className="flex cursor-pointer items-center justify-between rounded-[16px] border border-[#1a1a1a] bg-[#000000] p-4 transition hover:border-[#222]">
-              <span className="text-base font-medium text-white">Impulse Buy ⚡</span>
+              <span className="text-base font-medium text-white">Impulse Buy</span>
               <input
-                type="checkbox"
                 checked={impulseBuy}
-                onChange={(e) => setImpulseBuy(e.target.checked)}
                 className="h-5 w-5 rounded-md border-gray-300 transition"
+                onChange={(event) => setImpulseBuy(event.target.checked)}
                 style={{ accentColor: "#DEFF9A" }}
+                type="checkbox"
               />
             </label>
 
             <label className="flex cursor-pointer items-center justify-between rounded-[16px] border border-[#1a1a1a] bg-[#000000] p-4 transition hover:border-[#222]">
-              <span className="text-base font-medium text-white">Regret Tag 😣</span>
+              <span className="text-base font-medium text-white">Regret Tag</span>
               <input
-                type="checkbox"
                 checked={regret}
-                onChange={(e) => setRegret(e.target.checked)}
                 className="h-5 w-5 rounded-md border-gray-300 transition"
+                onChange={(event) => setRegret(event.target.checked)}
                 style={{ accentColor: "#ff6b6b" }}
+                type="checkbox"
               />
             </label>
           </div>
         </section>
-
       </main>
     </div>
   );

@@ -1,4 +1,3 @@
-import AccountMeta from "./AccountMeta";
 import AdvisorPanel from "./AdvisorPanel";
 import BrandMark from "../common/BrandMark";
 import RecurringPayments from "./RecurringPayments";
@@ -18,11 +17,17 @@ const calculateMonthlyExpenses = (transactions) =>
     .filter((transaction) => !isIncomeTransaction(transaction))
     .reduce((total, transaction) => total + Math.abs(Number(transaction.amount ?? 0)), 0);
 
-function Dashboard({ session, transactions, transactionsState, onLogout,  onDeleteTransaction }) {
-  const startingBalance = Number(session.user.currentBalance ?? 0);
+function Dashboard({
+  session,
+  transactions,
+  transactionsState,
+  onLogout,
+  onDeleteTransaction,
+  onUpdateTransaction,
+}) {
+  const totalBalance = Number(session.user.currentBalance ?? 0);
   const monthlyIncome = calculateMonthlyIncome(transactions);
   const monthlyExpenses = calculateMonthlyExpenses(transactions);
-  const totalBalance = startingBalance + monthlyIncome - monthlyExpenses;
 
   return (
     <div className="w-full">
@@ -47,13 +52,16 @@ function Dashboard({ session, transactions, transactionsState, onLogout,  onDele
         </section>
 
         <section className="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(360px,0.95fr)]">
-          <TransactionList transactions={transactions} transactionsState={transactionsState}  token={session.accessToken}
-          onDeleteTransaction={onDeleteTransaction}/>
+          <TransactionList
+            onDeleteTransaction={onDeleteTransaction}
+            onUpdateTransaction={onUpdateTransaction}
+            transactions={transactions}
+            transactionsState={transactionsState}
+          />
 
           <div className="grid min-w-0 content-start gap-5">
             <AdvisorPanel monthlyExpenses={monthlyExpenses} transactions={transactions} />
             <RecurringPayments transactions={transactions} />
-            
           </div>
         </section>
       </main>

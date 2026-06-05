@@ -16,7 +16,9 @@ const request = async (path, options) => {
 
   if (!response.ok) {
     const jsonMessage =
-      body && typeof body === "object" && "message" in body ? body.message : null;
+      body && typeof body === "object"
+        ? body.message || body.error || body.detail || null
+        : null;
     const message =
       jsonMessage ||
       (typeof body === "string" && body.trim()
@@ -82,4 +84,22 @@ export const createTransaction = async (token, transaction) =>
     },
     body: JSON.stringify(transaction),
   });
-  
+
+export const updateTransaction = async (token, id, transaction) =>
+  request(`/transactions/${id}`, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(transaction),
+  });
+
+export const deleteTransaction = async (token, id) =>
+  request(`/transactions/${id}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  });

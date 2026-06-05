@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { formatAmount } from "../../utils/formatters";
 
 function CategoryDot({ color }) {
@@ -7,8 +8,8 @@ function CategoryDot({ color }) {
 const getTransactionCategory = (transaction) => {
   if (transaction.category?.name) return transaction.category.name;
   if (typeof transaction.category === "string") return transaction.category;
-  if (transaction.regret) return "Regret";
-  if (transaction.impulseBuy) return "Impulse";
+  if (transaction.regret || transaction.isRegret) return "Regret";
+  if (transaction.impulseBuy || transaction.isImpulseBuy) return "Impulse";
   return "Expenses";
 };
 
@@ -31,8 +32,10 @@ const buildCategoryBreakdown = (transactions) => {
 
 const formatTransactionDate = (date) => {
   if (!date) return "-";
+
   const parsed = new Date(date);
   if (Number.isNaN(parsed.getTime())) return String(date);
+
   return parsed.toLocaleDateString("de-DE");
 };
 
@@ -45,7 +48,9 @@ function CategoryLegend({ categories }) {
             <CategoryDot color={category.color} />
             <div>
               <p className="m-0 text-sm font-extrabold text-white">{category.label}</p>
-              <p className="m-0 text-sm font-bold text-[#daffde]/75">{formatAmount(category.amount)}</p>
+              <p className="m-0 text-sm font-bold text-[#daffde]/75">
+                {formatAmount(category.amount)}
+              </p>
             </div>
           </div>
         ))
@@ -80,35 +85,175 @@ function SpendingPie({ categories }) {
   );
 }
 
-function TransactionTable({
-  transactions
-}) {
+function TransactionTable({ onDeleteTransaction, onUpdateTransaction, transactions }) {
+  const [editingId, setEditingId] = useState(null);
+  const [editForm, setEditForm] = useState({ amount: "", description: "" });
+  const [pendingId, setPendingId] = useState(null);
+  const [actionError, setActionError] = useState("");
+
+  const startEditing = (transaction) => {
+    setActionError("");
+    setEditingId(transaction.id);
+    setEditForm({
+      amount: String(transaction.amount ?? ""),
+      description: transaction.description ?? "",
+    });
+  };
+
+  const cancelEditing = () => {
+    setEditingId(null);
+    setEditForm({ amount: "", description: "" });
+    setActionError("");
+  };
+
+  const handleEditChange = (event) => {
+    const { name, value } = event.target;
+    setEditForm((currentForm) => ({ ...currentForm, [name]: value }));
+  };
+
+  const handleSave = async (transaction) => {
+    const nextAmount = Number(editForm.amount);
+
+    if (!Number.isFinite(nextAmount) || nextAmount <= 0) {
+      setActionError("Amount must be greater than zero.");
+      return;
+    }
+
+    setPendingId(transaction.id);
+    setActionError("");
+
+    try {
+      await onUpdateTransaction(transaction.id, {
+        amount: nextAmount,
+        description: editForm.description.trim(),
+      });
+      cancelEditing();
+    } catch (error) {
+      setActionError(error.message || "Transaction could not be updated.");
+    } finally {
+      setPendingId(null);
+    }
+  };
+
+  const handleDelete = async (transaction) => {
+    setPendingId(transaction.id);
+    setActionError("");
+
+    try {
+      await onDeleteTransaction(transaction.id);
+      if (editingId === transaction.id) {
+        cancelEditing();
+      }
+    } catch (error) {
+      setActionError(error.message || "Transaction could not be deleted.");
+    } finally {
+      setPendingId(null);
+    }
+  };
+
   return (
     <div className="min-w-0 overflow-hidden rounded-2xl bg-white/8">
-<div className="grid grid-cols-[0.8fr_0.8fr_1fr_0.9fr_1.4fr] gap-3 bg-[#202020] px-4 py-3 text-xs font-extrabold text-white max-md:hidden xl:text-sm">
-  <span>Date</span>
-  <span>Type</span>
-  <span>Category</span>
-  <span>Amount, EUR</span>
-  <span>Description</span>
-</div>
+      <div className="grid grid-cols-[0.8fr_0.8fr_1fr_0.9fr_1.4fr_auto] gap-3 bg-[#202020] px-4 py-3 text-xs font-extrabold text-white max-md:hidden xl:text-sm">
+        <span>Date</span>
+        <span>Type</span>
+        <span>Category</span>
+        <span>Amount, EUR</span>
+        <span>Description</span>
+        <span className="text-right">Actions</span>
+      </div>
 
       <div className="divide-y divide-black/25">
         {transactions.length ? (
-          transactions.map((transaction) => (
-            <article
-  className="grid gap-1 bg-white/10 px-4 py-3 text-xs font-bold text-[#e9f5e8] md:grid-cols-[0.8fr_0.8fr_1fr_0.9fr_1.4fr] md:gap-3 xl:text-sm"
-  key={transaction.id}
->
-  <span>{formatTransactionDate(transaction.date)}</span>
-  <span>{transaction.type || "Expense"}</span>
-  <span>{getTransactionCategory(transaction)}</span>
-  <span>{Number(transaction.amount ?? 0).toFixed(2)}</span>
-  <span className="text-[#daffde]/70">{transaction.description}</span>
+          <>
+            {actionError ? (
+              <p className="m-0 bg-red-950/45 px-4 py-3 text-sm font-bold text-red-200">
+                {actionError}
+              </p>
+            ) : null}
 
+            {transactions.map((transaction) => {
+              const editing = editingId === transaction.id;
+              const pending = pendingId === transaction.id;
 
-</article>
-          ))
+              return (
+                <article
+                  className="grid gap-2 bg-white/10 px-4 py-3 text-xs font-bold text-[#e9f5e8] md:grid-cols-[0.8fr_0.8fr_1fr_0.9fr_1.4fr_auto] md:items-center md:gap-3 xl:text-sm"
+                  key={transaction.id}
+                >
+                  <span>{formatTransactionDate(transaction.date)}</span>
+                  <span>{transaction.type || "Expense"}</span>
+                  <span>{getTransactionCategory(transaction)}</span>
+
+                  {editing ? (
+                    <>
+                      <input
+                        className="min-h-9 rounded-lg border border-[#2b2b2b] bg-[#050505] px-3 text-sm text-white outline-none transition focus:border-[#deff9a]/70"
+                        disabled={pending}
+                        min="0.01"
+                        name="amount"
+                        onChange={handleEditChange}
+                        step="0.01"
+                        type="number"
+                        value={editForm.amount}
+                      />
+                      <input
+                        className="min-h-9 rounded-lg border border-[#2b2b2b] bg-[#050505] px-3 text-sm text-white outline-none transition focus:border-[#deff9a]/70"
+                        disabled={pending}
+                        name="description"
+                        onChange={handleEditChange}
+                        type="text"
+                        value={editForm.description}
+                      />
+                      <div className="flex justify-end gap-2">
+                        <button
+                          className="min-h-9 rounded-lg bg-[#deff9a] px-3 text-xs font-black text-black transition hover:bg-white disabled:cursor-wait disabled:opacity-60"
+                          disabled={pending}
+                          onClick={() => handleSave(transaction)}
+                          type="button"
+                        >
+                          Save
+                        </button>
+                        <button
+                          className="min-h-9 rounded-lg border border-[#2b2b2b] px-3 text-xs font-black text-white transition hover:border-[#deff9a]/60 disabled:cursor-wait disabled:opacity-60"
+                          disabled={pending}
+                          onClick={cancelEditing}
+                          type="button"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <span>{Number(transaction.amount ?? 0).toFixed(2)}</span>
+                      <span className="text-[#daffde]/70">{transaction.description}</span>
+                      <div className="flex justify-end gap-2">
+                        <button
+                          aria-label="Edit transaction"
+                          className="grid h-9 w-9 place-items-center rounded-lg border border-[#2b2b2b] text-base text-white transition hover:border-[#deff9a]/60 hover:text-[#deff9a] disabled:cursor-wait disabled:opacity-60"
+                          disabled={pending}
+                          onClick={() => startEditing(transaction)}
+                          title="Edit amount and description"
+                          type="button"
+                        >
+                          <span aria-hidden="true">&#9998;</span>
+                        </button>
+                        <button
+                          aria-label="Delete transaction"
+                          className="min-h-9 rounded-lg border border-red-300/30 px-3 text-xs font-black text-red-200 transition hover:border-red-200 hover:text-white disabled:cursor-wait disabled:opacity-60"
+                          disabled={pending}
+                          onClick={() => handleDelete(transaction)}
+                          type="button"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </article>
+              );
+            })}
+          </>
         ) : (
           <p className="m-0 bg-white/10 px-4 py-5 text-sm font-bold text-[#daffde]/65">
             No transactions yet. Add one from Home to populate this table.
@@ -120,8 +265,10 @@ function TransactionTable({
 }
 
 function TransactionList({
+  onDeleteTransaction,
+  onUpdateTransaction,
   transactions,
-  transactionsState
+  transactionsState,
 }) {
   const categories = buildCategoryBreakdown(transactions);
 
@@ -138,9 +285,10 @@ function TransactionList({
         </p>
       ) : (
         <TransactionTable
-  transactions={transactions}
- 
-/>
+          onDeleteTransaction={onDeleteTransaction}
+          onUpdateTransaction={onUpdateTransaction}
+          transactions={transactions}
+        />
       )}
     </section>
   );

@@ -3,9 +3,22 @@ import AuthPanel from "./components/auth/AuthPanel";
 import Dashboard from "./components/dashboard/Dashboard";
 import Home from "./components/dashboard/Home";
 import { EMPTY_AUTH_FORM } from "./constants/auth";
-import { fetchTransactions, loginUser, registerUser } from "./services/api";
+import {
+  deleteTransaction,
+  fetchTransactions,
+  loginUser,
+  registerUser,
+  updateTransaction,
+} from "./services/api";
 import { buildSession, clearSession, readStoredSession, saveSession } from "./utils/session";
 import "./index.css";
+
+const getTransactionBalanceDelta = (transaction) => {
+  const amount = Number(transaction.amount ?? 0);
+  const isIncome = String(transaction.type ?? "").toLowerCase() === "income";
+
+  return isIncome ? amount : -Math.abs(amount);
+};
 
 function App() {
   const [session, setSession] = useState(readStoredSession);
@@ -18,8 +31,6 @@ function App() {
     loading: false,
     error: "",
   });
-
-  // Track the active view tab ("home" or "dashboard")
   const [activeTab, setActiveTab] = useState("home");
 
   useEffect(() => {
@@ -81,15 +92,14 @@ function App() {
       let registeredUser = null;
 
       if (authMode === "register") {
-      registeredUser = await registerUser({
-  ...credentials,
-  hourlyWage: Number(authForm.hourlyWage),
-  startingBalance: Number(authForm.currentBalance || 0),
-});
+        registeredUser = await registerUser({
+          ...credentials,
+          hourlyWage: Number(authForm.hourlyWage),
+          startingBalance: Number(authForm.currentBalance || 0),
+        });
       }
 
       const loginResponse = await loginUser(credentials);
-
       const nextSession = buildSession({
         accessToken: loginResponse.accessToken,
         currentBalance: authForm.currentBalance,
@@ -97,7 +107,6 @@ function App() {
         registeredUser,
         username: credentials.username,
       });
-      console.log("SESSION:", nextSession);
 
       saveSession(nextSession);
       setSession(nextSession);
@@ -124,61 +133,129 @@ function App() {
       type: "success",
       text: "You are logged out on this browser.",
     });
-    // Reset back to the home view upon logging out
     setActiveTab("home");
   };
 
-  // Callback to append locally added expenses from the Home form directly into the app state
-  const handleAddTransaction = (newTx) => {
-    setTransactions((prev) => [newTx, ...prev]);
+  const updateSessionBalance = (balanceUpdater) => {
+    setSession((currentSession) => {
+      if (!currentSession) {
+        return currentSession;
+      }
+
+      const currentBalance = Number(currentSession.user.currentBalance ?? 0);
+      const nextSession = {
+        ...currentSession,
+        user: {
+          ...currentSession.user,
+          currentBalance: balanceUpdater(currentBalance),
+        },
+      };
+
+      saveSession(nextSession);
+      return nextSession;
+    });
+  };
+
+  const handleAddTransaction = (newTransaction) => {
+    setTransactions((currentTransactions) => [newTransaction, ...currentTransactions]);
+    updateSessionBalance((currentBalance) => currentBalance + getTransactionBalanceDelta(newTransaction));
+  };
+
+  const handleDeleteTransaction = async (transactionId) => {
+    const deletedTransaction = transactions.find((transaction) => transaction.id === transactionId);
+
+    await deleteTransaction(session.accessToken, transactionId);
+
+    setTransactions((currentTransactions) =>
+      currentTransactions.filter((transaction) => transaction.id !== transactionId)
+    );
+
+    if (deletedTransaction) {
+      updateSessionBalance(
+        (currentBalance) => currentBalance - getTransactionBalanceDelta(deletedTransaction)
+      );
+    }
+  };
+
+  const handleUpdateTransaction = async (transactionId, updates) => {
+    const currentTransaction = transactions.find((transaction) => transaction.id === transactionId);
+
+    if (!currentTransaction) {
+      throw new Error("Transaction not found.");
+    }
+
+    const updatedTransaction = await updateTransaction(session.accessToken, transactionId, {
+      amount: updates.amount ?? currentTransaction.amount,
+      category: currentTransaction.category ?? null,
+      currency: currentTransaction.currency ?? "EUR",
+      date: currentTransaction.date,
+      description: updates.description ?? currentTransaction.description,
+      impulseBuy: currentTransaction.impulseBuy ?? currentTransaction.isImpulseBuy ?? false,
+      isImpulseBuy: currentTransaction.impulseBuy ?? currentTransaction.isImpulseBuy ?? false,
+      isRecurrent: currentTransaction.recurrent ?? currentTransaction.isRecurrent ?? false,
+      isRegret: currentTransaction.regret ?? currentTransaction.isRegret ?? false,
+      recurrent: currentTransaction.recurrent ?? currentTransaction.isRecurrent ?? false,
+      regret: currentTransaction.regret ?? currentTransaction.isRegret ?? false,
+      type: currentTransaction.type ?? "EXPENSE",
+    });
+
+    updateSessionBalance(
+      (currentBalance) =>
+        currentBalance -
+        getTransactionBalanceDelta(currentTransaction) +
+        getTransactionBalanceDelta(updatedTransaction)
+    );
+
+    setTransactions((currentTransactions) =>
+      currentTransactions.map((transaction) =>
+        transaction.id === transactionId ? updatedTransaction : transaction
+      )
+    );
   };
 
   return (
     <div className="grid min-h-screen place-items-center bg-[radial-gradient(circle_at_22%_10%,rgba(126,255,175,0.18),transparent_28rem),radial-gradient(circle_at_82%_82%,rgba(222,255,154,0.10),transparent_30rem),linear-gradient(145deg,#020302_0%,#071108_48%,#020302_100%)] p-[clamp(18px,4vw,48px)] font-sans text-[#daffde]">
       {session ? (
         <div className="flex w-full flex-col items-center">
-          
-          {/* Top Navigation Bar */}
-          <nav className="mb-6 flex w-full gap-6 border-b border-[#1a1a1a] px-4 pb-2 self-start">
+          <nav className="mb-6 flex w-full gap-6 self-start border-b border-[#1a1a1a] px-4 pb-2">
             <button
-              onClick={() => setActiveTab("home")}
               className={`flex items-center gap-2 pb-2 text-lg font-bold transition-colors duration-150 ${
-                activeTab === "home" 
-                  ? "text-white border-b-2 border-[#DEFF9A]" 
+                activeTab === "home"
+                  ? "border-b-2 border-[#DEFF9A] text-white"
                   : "text-gray-500 hover:text-white"
               }`}
+              onClick={() => setActiveTab("home")}
+              type="button"
             >
-              🏠 Home
+              Home
             </button>
             <button
-              onClick={() => setActiveTab("dashboard")}
               className={`flex items-center gap-2 pb-2 text-lg font-bold transition-colors duration-150 ${
-                activeTab === "dashboard" 
-                  ? "text-white border-b-2 border-[#DEFF9A]" 
+                activeTab === "dashboard"
+                  ? "border-b-2 border-[#DEFF9A] text-white"
                   : "text-gray-500 hover:text-white"
               }`}
+              onClick={() => setActiveTab("dashboard")}
+              type="button"
             >
-              📊 Dashboard
+              Dashboard
             </button>
           </nav>
 
-          {/* Core App View Router */}
           <div className="w-full">
             {activeTab === "home" ? (
-              <Home
-  onAddTransaction={handleAddTransaction}
-  token={session.accessToken}
-/>
+              <Home onAddTransaction={handleAddTransaction} token={session.accessToken} />
             ) : (
               <Dashboard
+                onDeleteTransaction={handleDeleteTransaction}
                 onLogout={handleLogout}
+                onUpdateTransaction={handleUpdateTransaction}
                 session={session}
                 transactions={transactions}
                 transactionsState={transactionsState}
               />
             )}
           </div>
-
         </div>
       ) : (
         <AuthPanel
@@ -194,4 +271,5 @@ function App() {
     </div>
   );
 }
+
 export default App;
