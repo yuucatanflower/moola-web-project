@@ -69,6 +69,48 @@ public class AuthController {
 
         return ResponseEntity.ok(response);
     }
+
+    @PutMapping("/profile")
+    public ResponseEntity<Map<String, Object>> updateProfile(@RequestBody Map<String, Object> body) {
+        // 1. Resolve and validate the target username tracking parameters
+        String username = (String) body.get("username");
+        if (username == null || username.trim().isEmpty()) {
+            throw new RuntimeException("Username cannot be empty");
+        }
+
+        // 2. Fetch the corresponding persistent domain entity from the database mapping context
+        User user = userRepository.findByUsername(username.trim())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // 3. Extract and parse incoming numeric data values explicitly
+        if (body.containsKey("hourlyWage")) {
+            Object wageObj = body.get("hourlyWage");
+            if (wageObj != null) {
+                user.setHourlyWage(new BigDecimal(wageObj.toString()));
+            }
+        }
+
+        // 4. Save modifications back to the storage layer via JPA abstraction runtime routines
+        User updatedUser = userRepository.save(user);
+
+        // 5. Structure a synchronized safe object payload representing state mutations matching local structures
+        BigDecimal currentBalance = BigDecimal.ZERO;
+        String walletCurrency = "EUR";
+        if (updatedUser.getWallet() != null) {
+            currentBalance = updatedUser.getWallet().getBalance();
+            walletCurrency = updatedUser.getWallet().getCurrency();
+        }
+
+        Map<String, Object> safeUserData = new HashMap<>();
+        safeUserData.put("id", updatedUser.getId());
+        safeUserData.put("username", updatedUser.getUsername());
+        safeUserData.put("hourlyWage", updatedUser.getHourlyWage());
+        safeUserData.put("role", updatedUser.getRole());
+        safeUserData.put("balance", currentBalance);
+        safeUserData.put("currency", walletCurrency);
+
+        return ResponseEntity.ok(safeUserData);
+    }
 }
 
 // small request object used only for registration JSON coming from the frontend
