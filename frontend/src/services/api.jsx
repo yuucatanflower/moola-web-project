@@ -131,3 +131,13 @@ export const updateUser = async (adminPassword, userId, username) =>
       username,
     }),
   });
+
+// Dispatches modified profile credentials directly to the Spring Boot REST context
+export const updateUserProfile = async (token, profileUpdates) =>
+  request("/auth/profile", {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(profileUpdates),
+  });

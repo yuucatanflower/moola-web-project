@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import AuthPanel from "./components/auth/AuthPanel";
 import Dashboard from "./components/dashboard/Dashboard";
 import Home from "./components/dashboard/Home";
+import Settings from "./components/dashboard/Settings";
 import { EMPTY_AUTH_FORM } from "./constants/auth";
 import {
   deleteTransaction,
@@ -9,6 +10,7 @@ import {
   loginUser,
   registerUser,
   updateTransaction,
+  updateUserProfile,
 } from "./services/api";
 import { buildSession, clearSession, readStoredSession, saveSession } from "./utils/session";
 import "./index.css";
@@ -139,6 +141,25 @@ function App() {
     setActiveTab("home");
   };
 
+  // Profile patch handler to update stateful session details locally
+  const handleUpdateProfile = (updatedData) => {
+    setSession((currentSession) => {
+      if (!currentSession) return currentSession;
+
+      const nextSession = {
+        ...currentSession,
+        user: {
+          ...currentSession.user,
+          username: updatedData.username ?? currentSession.user.username,
+          hourlyWage: updatedData.hourlyWage ?? currentSession.user.hourlyWage,
+        },
+      };
+
+      saveSession(nextSession);
+      return nextSession;
+    });
+  };
+
   const updateSessionBalance = (balanceUpdater) => {
     setSession((currentSession) => {
       if (!currentSession) {
@@ -215,13 +236,43 @@ function App() {
       )
     );
   };
+
   if (isAdminPage) {
-  return (
-    <div className="grid min-h-screen place-items-center bg-[radial-gradient(circle_at_22%_10%,rgba(126,255,175,0.18),transparent_28rem),radial-gradient(circle_at_82%_82%,rgba(222,255,154,0.10),transparent_30rem),linear-gradient(145deg,#020302_0%,#071108_48%,#020302_100%)] p-[clamp(18px,4vw,48px)] font-sans text-[#daffde]">
-      <AdminPanel />
-    </div>
-  );
-}
+    return (
+      <div className="grid min-h-screen place-items-center bg-[radial-gradient(circle_at_22%_10%,rgba(126,255,175,0.18),transparent_28rem),radial-gradient(circle_at_82%_82%,rgba(222,255,154,0.10),transparent_30rem),linear-gradient(145deg,#020302_0%,#071108_48%,#020302_100%)] p-[clamp(18px,4vw,48px)] font-sans text-[#daffde]">
+        <AdminPanel />
+      </div>
+    );
+  }
+
+  // Helper template mapper to dynamically isolate view switches
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case "home":
+        return <Home onAddTransaction={handleAddTransaction} token={session.accessToken} />;
+      case "dashboard":
+        return (
+          <Dashboard
+            onDeleteTransaction={handleDeleteTransaction}
+            onLogout={handleLogout}
+            onUpdateTransaction={handleUpdateTransaction}
+            session={session}
+            transactions={transactions}
+            transactionsState={transactionsState}
+          />
+        );
+      case "settings":
+        return (
+          <Settings
+            session={session}
+            onUpdateProfile={handleUpdateProfile}
+            onLogout={handleLogout}
+          />
+        );
+      default:
+        return <Home onAddTransaction={handleAddTransaction} token={session.accessToken} />;
+    }
+  };
 
   return (
     <div className="grid min-h-screen place-items-center bg-[radial-gradient(circle_at_22%_10%,rgba(126,255,175,0.18),transparent_28rem),radial-gradient(circle_at_82%_82%,rgba(222,255,154,0.10),transparent_30rem),linear-gradient(145deg,#020302_0%,#071108_48%,#020302_100%)] p-[clamp(18px,4vw,48px)] font-sans text-[#daffde]">
@@ -250,21 +301,21 @@ function App() {
             >
               Dashboard
             </button>
+            <button
+              className={`flex items-center gap-2 pb-2 text-lg font-bold transition-colors duration-150 ${
+                activeTab === "settings"
+                  ? "border-b-2 border-[#DEFF9A] text-white"
+                  : "text-gray-500 hover:text-white"
+              }`}
+              onClick={() => setActiveTab("settings")}
+              type="button"
+            >
+              Settings
+            </button>
           </nav>
 
           <div className="w-full">
-            {activeTab === "home" ? (
-              <Home onAddTransaction={handleAddTransaction} token={session.accessToken} />
-            ) : (
-              <Dashboard
-                onDeleteTransaction={handleDeleteTransaction}
-                onLogout={handleLogout}
-                onUpdateTransaction={handleUpdateTransaction}
-                session={session}
-                transactions={transactions}
-                transactionsState={transactionsState}
-              />
-            )}
+            {renderTabContent()}
           </div>
         </div>
       ) : (
