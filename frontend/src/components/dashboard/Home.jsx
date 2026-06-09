@@ -13,6 +13,7 @@ function Home({ onAddTransaction, token }) {
   // Behavioral flags
   const [impulseBuy, setImpulseBuy] = useState(false);
   const [regret, setRegret] = useState(false);
+  const [recurrent, setRecurrent] = useState(false);
 
   // UI States
   const [submitError, setSubmitError] = useState("");
@@ -66,9 +67,9 @@ function Home({ onAddTransaction, token }) {
       description: description.trim() || (type === "INCOME" ? "Income Log" : "Expense Log"),
       impulseBuy: type === "EXPENSE" ? impulseBuy : false,
       isImpulseBuy: type === "EXPENSE" ? impulseBuy : false,
-      isRecurrent: false,
+      isRecurrent: recurrent,
       isRegret: type === "EXPENSE" ? regret : false,
-      recurrent: false,
+      recurrent: recurrent,
       regret: type === "EXPENSE" ? regret : false,
       type,
     };
@@ -85,6 +86,7 @@ function Home({ onAddTransaction, token }) {
       setDescription("");
       setImpulseBuy(false);
       setRegret(false);
+      setRecurrent(false);
       setTimeout(() => amountInputRef.current?.focus(), 50);
     } catch (error) {
       setSubmitError(error.message || "Failed to save transaction.");
@@ -279,6 +281,29 @@ function Home({ onAddTransaction, token }) {
                   />
                   <span className={`text-sm font-bold tracking-wide ${regret ? "text-[#ff6b6b]" : "text-gray-400"}`}>😣 Regret</span>
                 </label>
+
+                <label className={`flex cursor-pointer items-center justify-between gap-3 rounded-2xl border px-5 py-3 transition-all duration-200 ${
+                      recurrent
+                        ? "border-[#8fe9ff] bg-[#8fe9ff]/10"
+                        : "border-[#1a1a1a] bg-[#000000]/50 hover:border-[#333]"
+                    }`}
+                  >
+                    <input
+                      checked={recurrent}
+                      className="h-4 w-4 cursor-pointer"
+                      onChange={(e) => setRecurrent(e.target.checked)}
+                      type="checkbox"
+                      disabled={isSubmitting}
+                    />
+                    <span
+                      className={`text-sm font-bold tracking-wide ${
+                        recurrent ? "text-[#8fe9ff]" : "text-gray-400"
+                      }`}
+                    >
+                      🔄 Recurring
+                    </span>
+                  </label>
+
               </div>
 
               {/* Error Message */}

@@ -55,13 +55,17 @@ function Dashboard({
           <TransactionList
             onDeleteTransaction={onDeleteTransaction}
             onUpdateTransaction={onUpdateTransaction}
-            transactions={transactions}
+            transactions={transactions.filter((t) => !t.recurrent)}
             transactionsState={transactionsState}
           />
 
           <div className="grid min-w-0 content-start gap-5">
             <AdvisorPanel monthlyExpenses={monthlyExpenses} transactions={transactions} />
-            <RecurringPayments transactions={transactions} />
+            <RecurringPayments
+              transactions={transactions}
+              onDeleteTransaction={onDeleteTransaction}
+
+            />
           </div>
         </section>
       </main>
