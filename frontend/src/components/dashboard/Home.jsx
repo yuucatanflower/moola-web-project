@@ -1,147 +1,310 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { createTransaction } from "../../services/api";
 import BrandMark from "../common/BrandMark";
 
 function Home({ onAddTransaction, token }) {
-  const [description, setDescription] = useState("");
+  // --- STATE MANAGEMENT ---
+  const [type, setType] = useState("EXPENSE"); // Toggles between EXPENSE and INCOME
+  const [currency, setCurrency] = useState("EUR");
   const [amount, setAmount] = useState("");
+  const [category, setCategory] = useState("");
+  const [description, setDescription] = useState("");
+
+  // Behavioral flags
   const [impulseBuy, setImpulseBuy] = useState(false);
   const [regret, setRegret] = useState(false);
+
+  // UI States
   const [submitError, setSubmitError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [toast, setToast] = useState({ visible: false, message: "", type: "success" });
+
+  const amountInputRef = useRef(null);
+
+  const currencySymbols = { EUR: "€", USD: "$", GBP: "£", JPY: "¥", CNY: "元" };
+  const activePlaceholder = type === "INCOME" ? "I made ..." : "I spent ...";
+
+  // The giant text classes used for the currency, placeholder, and input
+  const giantTextClasses = "text-6xl sm:text-8xl md:text-9xl font-black leading-none tracking-normal";
+
+  // Auto-focus the giant input on load
+  useEffect(() => {
+    amountInputRef.current?.focus();
+  }, []);
+
+  const showToast = (message, toastType = "success") => {
+    setToast({ visible: true, message, type: toastType });
+    setTimeout(() => setToast({ visible: false, message: "", type: "success" }), 4000);
+  };
+
+  // --- HANDLERS ---
+  const handleAmountChange = (e) => {
+    let val = e.target.value.replace(/[^0-9.]/g, "");
+    const parts = val.split(".");
+    if (parts.length > 2) val = parts[0] + "." + parts.slice(1).join("");
+    setAmount(val);
+  };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     setSubmitError("");
+    setIsSubmitting(true);
 
-    if (!description.trim() || !amount) {
+    const numericAmount = parseFloat(amount);
+    if (!amount || isNaN(numericAmount) || numericAmount <= 0) {
+      setSubmitError("Please enter a valid amount greater than 0.");
+      setIsSubmitting(false);
       return;
     }
 
+    // Match backend expectations. If it's income, ignore the behavioral tags.
     const newTransaction = {
-      amount: Number(amount),
-      currency: "EUR",
+      amount: numericAmount,
+      currency,
+      category: category.trim() || "General", // Default to General if left blank
       date: new Date().toISOString().split("T")[0],
-      description: description.trim(),
-      impulseBuy,
-      isImpulseBuy: impulseBuy,
+      description: description.trim() || (type === "INCOME" ? "Income Log" : "Expense Log"),
+      impulseBuy: type === "EXPENSE" ? impulseBuy : false,
+      isImpulseBuy: type === "EXPENSE" ? impulseBuy : false,
       isRecurrent: false,
-      isRegret: regret,
+      isRegret: type === "EXPENSE" ? regret : false,
       recurrent: false,
-      regret,
-      type: "EXPENSE",
+      regret: type === "EXPENSE" ? regret : false,
+      type,
     };
 
     try {
       const savedTransaction = await createTransaction(token, newTransaction);
-
       onAddTransaction(savedTransaction);
-      setDescription("");
+
+      showToast("Transaction saved successfully!");
+
+      // Reset form
       setAmount("");
+      setCategory("");
+      setDescription("");
       setImpulseBuy(false);
       setRegret(false);
+      setTimeout(() => amountInputRef.current?.focus(), 50);
     } catch (error) {
       setSubmitError(error.message || "Failed to save transaction.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="w-full overflow-hidden rounded-3xl border border-[#202020] bg-[radial-gradient(circle_at_18%_5%,rgba(126,255,175,0.10),transparent_23rem),linear-gradient(145deg,rgba(12,22,13,0.96),rgba(0,0,0,0.94)_52%,rgba(6,14,7,0.96))] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.6)] sm:p-10">
-      <header className="mb-8 flex items-end justify-between gap-5 border-b border-[#1a1a1a] pb-6 max-md:flex-col max-md:items-start">
-        <div>
-          <BrandMark />
-          <h1 className="my-5 mb-0 text-[clamp(2rem,4vw,3.5rem)] font-extrabold leading-tight text-white">
-            Home
-          </h1>
+      <>
+        {/* Dynamic Aurora Background (Calm Vertical Breathing) */}
+        <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes auroraFlow {
+          0% { background-position: 50% 35%; }
+          50% { background-position: 50% 65%; }
+          100% { background-position: 50% 35%; }
+        }
+        .animate-aurora {
+          background: radial-gradient(circle at center, rgba(126, 255, 175, 0.12), transparent 70rem), 
+                      linear-gradient(145deg, rgba(12, 22, 13, 0.98), rgba(0, 0, 0, 0.95) 52%, rgba(6, 14, 7, 0.98));
+          background-size: 150% 150%;
+          animation: auroraFlow 30s ease-in-out infinite;
+          background-attachment: fixed;
+        }
+      `}} />
+
+        <div className="relative w-full min-h-[85vh] flex flex-col items-center p-5 sm:p-12 transition-all duration-300 rounded-3xl border border-[#202020] shadow-[0_24px_80px_rgba(0,0,0,0.6)] animate-aurora">
+
+          {/* Toast Notification */}
+          {toast.visible && (
+              <div className="fixed top-8 left-1/2 transform -translate-x-1/2 z-50 flex items-center px-6 py-4 rounded-2xl border border-[#deff9a]/30 bg-[#121c15]/95 text-[#deff9a] backdrop-blur-xl shadow-2xl">
+                <span className="text-base font-black uppercase tracking-wider">✓ SUCCESS: </span>
+                <span className="text-base font-bold ml-2 text-white">{toast.message}</span>
+              </div>
+          )}
+
+          {/* Header */}
+          <header className="absolute top-8 left-8 sm:top-12 sm:left-12 pointer-events-none w-full">
+            <BrandMark />
+            <h1 className="mt-1 text-3xl font-black text-white">Home</h1>
+          </header>
+
+          <main className="flex-1 flex flex-col items-center justify-center w-full mt-20 sm:mt-0">
+            <form onSubmit={handleSubmit} className="w-full max-w-4xl flex flex-col items-center justify-center">
+
+              {/* 1. INCOME / EXPENSE TOGGLE */}
+              <div className="flex bg-[#121614] p-1.5 border border-[#1f2421] rounded-2xl mb-12 shadow-inner hover:border-[#333] transition-all">
+                {['INCOME', 'EXPENSE'].map((t) => {
+                  const isSelected = type === t;
+                  // Determine glowing colors based on the type
+                  const activeClasses = t === "INCOME"
+                      ? "bg-[#2a3627] text-[#DEFF9A] shadow-[0_4px_20px_rgba(222,255,154,0.15)]"
+                      : "bg-[#3a1a1a] text-[#ff6b6b] shadow-[0_4px_20px_rgba(255,107,107,0.15)]"; // Red for EXPENSE
+
+                  return (
+                      <button
+                          key={t}
+                          type="button"
+                          onClick={() => {
+                            setType(t);
+                            setSubmitError("");
+                            setTimeout(() => amountInputRef.current?.focus(), 20);
+                          }}
+                          className={`px-8 py-2.5 text-sm font-extrabold rounded-xl uppercase tracking-wider transition-all duration-300 ${
+                              isSelected ? activeClasses : "text-gray-500 hover:text-gray-300"
+                          }`}
+                      >
+                        {t}
+                      </button>
+                  );
+                })}
+              </div>
+
+              {/* 2. GIANT AMOUNT INPUT */}
+              <div className="flex items-center justify-center w-full mb-12 px-4">
+                {/* Switched to items-center to fix vertical alignment between symbol and text */}
+                <div className="flex flex-row items-center justify-center">
+
+                  {/* Currency Dropdown overlapping the Symbol */}
+                  <div className="relative group cursor-pointer shrink-0 mr-3 sm:mr-5">
+                  <span className={`${giantTextClasses} text-white group-hover:text-[#DEFF9A] transition-colors drop-shadow-md`}>
+                    {currencySymbols[currency]}
+                  </span>
+                    <select
+                        value={currency}
+                        onChange={(e) => { setCurrency(e.target.value); amountInputRef.current?.focus(); }}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    >
+                      {/* ADDED: text-black and bg-white to options to fix the invisible text issue */}
+                      {Object.keys(currencySymbols).map(c => (
+                          <option key={c} value={c} className="text-black bg-white text-base">
+                            {c}
+                          </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* The dynamic growing text input */}
+                  <div className="relative grid items-center justify-items-start">
+                  <span className={`${giantTextClasses} text-transparent whitespace-pre pointer-events-none`}>
+                    {amount || activePlaceholder}
+                  </span>
+                    {!amount && (
+                        <span className={`${giantTextClasses} text-[#424c45] pointer-events-none absolute left-0`}>
+                      {activePlaceholder}
+                    </span>
+                    )}
+                    <input
+                        ref={amountInputRef}
+                        type="text"
+                        inputMode="decimal"
+                        value={amount}
+                        onChange={handleAmountChange}
+                        disabled={isSubmitting}
+                        className={`absolute inset-0 bg-transparent border-none outline-none p-0 text-white text-left drop-shadow-md ${giantTextClasses}`}
+                    />
+                  </div>
+
+                </div>
+              </div>
+
+              {/* 3. CATEGORY & VENDOR DESCRIPTION */}
+              <div className="w-full max-w-[320px] flex flex-col gap-3 mb-8">
+
+                {/* Category Selector/Adder using native datalist */}
+                <input
+                    list="category-options"
+                    className="min-h-12 w-full text-center rounded-[12px] border border-[#2b2b2b] bg-[#0b0b0b]/80 px-4 text-sm font-bold text-[#DEFF9A] placeholder-gray-600 transition-all focus:border-[#deff9a] focus:ring-1 focus:ring-[#deff9a] focus:outline-none backdrop-blur-md"
+                    onChange={(event) => setCategory(event.target.value)}
+                    placeholder="Category (Select or Type)"
+                    type="text"
+                    value={category}
+                    disabled={isSubmitting}
+                />
+                <datalist id="category-options">
+                  {type === "EXPENSE" ? (
+                      <>
+                        <option value="Food & Dining" />
+                        <option value="Groceries" />
+                        <option value="Transportation" />
+                        <option value="Entertainment" />
+                        <option value="Utilities" />
+                        <option value="Shopping" />
+                      </>
+                  ) : (
+                      <>
+                        <option value="Salary" />
+                        <option value="Freelance" />
+                        <option value="Investments" />
+                        <option value="Gift" />
+                      </>
+                  )}
+                </datalist>
+
+                {/* Vendor / Description */}
+                <input
+                    className="min-h-12 w-full text-center rounded-[12px] border border-[#2b2b2b] bg-[#0b0b0b]/80 px-4 text-base font-medium text-white placeholder-gray-600 transition-all focus:border-[#deff9a] focus:ring-1 focus:ring-[#deff9a] focus:outline-none backdrop-blur-md"
+                    onChange={(event) => setDescription(event.target.value)}
+                    placeholder="Description (Optional)"
+                    type="text"
+                    value={description}
+                    disabled={isSubmitting}
+                />
+              </div>
+
+              {/* 4. BEHAVIORAL TAGS (Only show if logging an Expense) */}
+              <div className={`flex gap-4 mb-10 transition-all duration-500 overflow-hidden ${type === "EXPENSE" ? "opacity-100 max-h-20" : "opacity-0 max-h-0"}`}>
+                <label className={`flex cursor-pointer items-center justify-between gap-3 rounded-2xl border px-5 py-3 transition-all duration-200 ${
+                    impulseBuy ? "border-[#DEFF9A] bg-[#DEFF9A]/10" : "border-[#1a1a1a] bg-[#000000]/50 hover:border-[#333]"
+                }`}>
+                  <input
+                      checked={impulseBuy}
+                      className="h-4 w-4 cursor-pointer"
+                      onChange={(e) => setImpulseBuy(e.target.checked)}
+                      style={{ accentColor: "#DEFF9A" }}
+                      type="checkbox"
+                      disabled={isSubmitting || type === "INCOME"}
+                  />
+                  <span className={`text-sm font-bold tracking-wide ${impulseBuy ? "text-[#DEFF9A]" : "text-gray-400"}`}>⚡ Impulse</span>
+                </label>
+
+                <label className={`flex cursor-pointer items-center justify-between gap-3 rounded-2xl border px-5 py-3 transition-all duration-200 ${
+                    regret ? "border-[#ff6b6b] bg-[#ff6b6b]/10" : "border-[#1a1a1a] bg-[#000000]/50 hover:border-[#333]"
+                }`}>
+                  <input
+                      checked={regret}
+                      className="h-4 w-4 cursor-pointer"
+                      onChange={(e) => setRegret(e.target.checked)}
+                      style={{ accentColor: "#ff6b6b" }}
+                      type="checkbox"
+                      disabled={isSubmitting || type === "INCOME"}
+                  />
+                  <span className={`text-sm font-bold tracking-wide ${regret ? "text-[#ff6b6b]" : "text-gray-400"}`}>😣 Regret</span>
+                </label>
+              </div>
+
+              {/* Error Message */}
+              {submitError && (
+                  <div className="mb-6 rounded-xl border border-red-500/30 bg-[#2a0e0e] px-5 py-3 text-sm font-bold text-[#ff6b6b]">
+                    ⚠️ {submitError}
+                  </div>
+              )}
+
+              {/* 5. SUBMIT BUTTON */}
+              <button
+                  className={`min-h-14 w-full max-w-[280px] rounded-2xl px-6 text-sm font-black uppercase tracking-widest text-black transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
+                      type === "INCOME"
+                          ? "bg-[#DEFF9A] hover:bg-white hover:shadow-[0_0_30px_rgba(222,255,154,0.4)]"
+                          : "bg-[#ff6b6b] text-white hover:bg-[#ff8585] hover:shadow-[0_0_30px_rgba(255,107,107,0.4)]"
+                  }`}
+                  type="submit"
+                  disabled={isSubmitting}
+              >
+                {isSubmitting ? "Processing..." : `Log ${type}`}
+              </button>
+
+            </form>
+          </main>
         </div>
-      </header>
-
-      <main className="grid gap-6 lg:grid-cols-[2fr_1fr]">
-        <section className="rounded-[20px] border border-[#222] bg-[#0a0a0a] p-5 sm:p-8">
-          <div className="mb-6">
-            <h2 className="m-0 text-[1.35rem] font-bold text-white">Log Expense</h2>
-            <p className="mt-1 text-xs font-bold uppercase text-[#daffde]/55">
-              Track choices and transparently record your behavioral triggers
-            </p>
-          </div>
-
-          <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold uppercase text-[#daffde]/55">
-                Vendor Description
-              </label>
-              <input
-                className="min-h-12 w-full rounded-[10px] border border-[#2b2b2b] bg-[#0b0b0b] px-4 text-base font-medium text-white placeholder-gray-600 transition focus:border-[#deff9a]/55 focus:outline-none"
-                onChange={(event) => setDescription(event.target.value)}
-                placeholder="e.g., Netflix Subscription, Starbucks Coffee"
-                type="text"
-                value={description}
-              />
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold uppercase text-[#daffde]/55">
-                Amount (EUR)
-              </label>
-              <input
-                className="min-h-12 w-full rounded-[10px] border border-[#2b2b2b] bg-[#0b0b0b] px-4 text-base font-medium text-white placeholder-gray-600 transition focus:border-[#deff9a]/55 focus:outline-none"
-                onChange={(event) => setAmount(event.target.value)}
-                placeholder="0.00"
-                step="0.01"
-                type="number"
-                value={amount}
-              />
-            </div>
-
-            <button
-              className="mt-2 min-h-12 w-full rounded-[10px] bg-[#DEFF9A] px-6 text-base font-bold text-black transition hover:bg-white hover:shadow-[0_0_15px_rgba(222,255,154,0.4)]"
-              type="submit"
-            >
-              Save Transaction
-            </button>
-
-            {submitError ? (
-              <p className="m-0 rounded-xl border border-red-300/35 bg-[#050505] px-3.5 py-3 text-sm font-bold leading-6 text-red-200">
-                {submitError}
-              </p>
-            ) : null}
-          </form>
-        </section>
-
-        <section className="grid min-w-0 content-start gap-6 rounded-[20px] border border-[#222] bg-[#0a0a0a] p-5 sm:p-8">
-          <div>
-            <h2 className="m-0 mb-4 text-[1.35rem] font-bold text-white">Behavioral Tags</h2>
-            <p className="mb-6 text-sm font-medium leading-relaxed text-[#daffde]/55">
-              Flag habits instantly. Checked items apply dynamic visual metrics across your
-              ledger dashboards.
-            </p>
-          </div>
-
-          <div className="flex flex-col gap-4">
-            <label className="flex cursor-pointer items-center justify-between rounded-[16px] border border-[#1a1a1a] bg-[#000000] p-4 transition hover:border-[#222]">
-              <span className="text-base font-medium text-white">Impulse Buy</span>
-              <input
-                checked={impulseBuy}
-                className="h-5 w-5 rounded-md border-gray-300 transition"
-                onChange={(event) => setImpulseBuy(event.target.checked)}
-                style={{ accentColor: "#DEFF9A" }}
-                type="checkbox"
-              />
-            </label>
-
-            <label className="flex cursor-pointer items-center justify-between rounded-[16px] border border-[#1a1a1a] bg-[#000000] p-4 transition hover:border-[#222]">
-              <span className="text-base font-medium text-white">Regret Tag</span>
-              <input
-                checked={regret}
-                className="h-5 w-5 rounded-md border-gray-300 transition"
-                onChange={(event) => setRegret(event.target.checked)}
-                style={{ accentColor: "#ff6b6b" }}
-                type="checkbox"
-              />
-            </label>
-          </div>
-        </section>
-      </main>
-    </div>
+      </>
   );
 }
 
