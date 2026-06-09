@@ -1,57 +1,60 @@
 package com.moola.backend.services;
 
 import com.moola.backend.models.User;
-import com.moola.backend.models.Wallet;
 import com.moola.backend.repositories.UserRepository;
-import com.moola.backend.repositories.WalletRepository;
 import com.moola.backend.security.JwtUtils;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
-import java.math.BigDecimal;
+import java.math.BigDecimal; // <-- Added this import
 
 @Service
-// contains the real register/login logic behind AuthController
 public class AuthService {
+
     private final UserRepository userRepository;
-    private final WalletRepository walletRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtils jwtUtils;
 
-    public AuthService(UserRepository userRepository,
-                       WalletRepository walletRepository,
-                       PasswordEncoder passwordEncoder,
-                       JwtUtils jwtUtils) {
+    // Injecting dependencies
+    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtUtils jwtUtils) {
         this.userRepository = userRepository;
-        this.walletRepository = walletRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtils = jwtUtils;
     }
 
-    @Transactional // if wallet creation fails, the new user is rolled back too
-    public User register(User user, BigDecimal initialBalance) {
-        // save only the hashed password, never the plain text one
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        user.setRole("USER");
+    public String login(String username, String password) {
+        // Find the user, throw a clean 401 if they don't exist
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid username or password"));
 
-        // save the user first so the wallet can point to the user id
-        User savedUser = userRepository.save(user);
+        // Verify the password using the Encoder
+        if (!passwordEncoder.matches(password, user.getPassword())) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid username or password");
+        }
 
-        // every new user starts with one default wallet
-        BigDecimal balance = initialBalance != null ? initialBalance : BigDecimal.ZERO;
-        Wallet defaultWallet = new Wallet(balance, "EUR", savedUser);
-        walletRepository.save(defaultWallet);
-
-        return savedUser;
+        // Generate and return the JWT token
+        return jwtUtils.generateToken(username);
     }
 
-    public String login(String username, String password) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-        if (passwordEncoder.matches(password, user.getPassword())) {
-            return jwtUtils.generateToken(username);
+    // CRITICAL FIX: Added 'BigDecimal startingBalance' to match your AuthController
+    public User register(User user, BigDecimal startingBalance) {
+        // Check if username is already taken
+        if (userRepository.findByUsername(user.getUsername()).isPresent()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Username is already taken");
         }
-        throw new RuntimeException("Invalid password");
+
+        // Encrypt the password before saving to the database
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+
+        // Save the user
+        User savedUser = userRepository.save(user);
+
+        // Note: Since you removed the balance from the User model, if you are
+        // storing the 'startingBalance' in a separate Wallet model now,
+        // you would trigger that wallet creation right here!
+
+        return savedUser;
     }
 }

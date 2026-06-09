@@ -13,7 +13,6 @@ import java.util.Map;
 import java.util.UUID;
 
 @Service
-// business logic for categories, including checking that users only touch their own categories
 public class CategoryService {
     private final CategoryRepository categoryRepository;
     private final TransactionRepository transactionRepository;
@@ -40,8 +39,7 @@ public class CategoryService {
     public Category updateCategory(UUID id, Category updatedCategory, User user) {
         Category existing = getCategoryById(id, user);
         existing.setName(updatedCategory.getName());
-        existing.setColorHex(updatedCategory.getColorHex());
-        existing.setEmoji(updatedCategory.getEmoji());
+        existing.setColorHex(updatedCategory.getColorHex()); // Keeps your optional hex colors clean
         return categoryRepository.save(existing);
     }
 
@@ -59,7 +57,6 @@ public class CategoryService {
         Category existing = getCategoryById(id, user);
         if (updates.containsKey("name")) existing.setName((String) updates.get("name"));
         if (updates.containsKey("colorHex")) existing.setColorHex((String) updates.get("colorHex"));
-        if (updates.containsKey("emoji")) existing.setEmoji((String) updates.get("emoji"));
         return categoryRepository.save(existing);
     }
 }
