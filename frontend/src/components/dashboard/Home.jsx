@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
-import { createTransaction } from "../../services/api";
+// Make sure to import fetchCategories!
+import { createTransaction, fetchCategories } from "../../services/api";
 import BrandMark from "../common/BrandMark";
 
 function Home({ onAddTransaction, token }) {
@@ -9,6 +10,9 @@ function Home({ onAddTransaction, token }) {
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("");
   const [description, setDescription] = useState("");
+
+  // NEW: State to hold database categories
+  const [userCategories, setUserCategories] = useState([]);
 
   // Behavioral flags
   const [impulseBuy, setImpulseBuy] = useState(false);
@@ -25,13 +29,25 @@ function Home({ onAddTransaction, token }) {
   const currencySymbols = { EUR: "€", USD: "$", GBP: "£", JPY: "¥", CNY: "元" };
   const activePlaceholder = type === "INCOME" ? "I made ..." : "I spent ...";
 
-  // The giant text classes used for the currency, placeholder, and input
   const giantTextClasses = "text-6xl sm:text-8xl md:text-9xl font-black leading-none tracking-normal";
 
-  // Auto-focus the giant input on load
+  // --- LIFECYCLE: Fetch categories on load ---
   useEffect(() => {
     amountInputRef.current?.focus();
-  }, []);
+
+    const loadCategories = async () => {
+      try {
+        if (token) {
+          const fetchedCats = await fetchCategories(token);
+          setUserCategories(fetchedCats);
+        }
+      } catch (error) {
+        console.error("Could not load custom categories:", error);
+      }
+    };
+
+    loadCategories();
+  }, [token]);
 
   const showToast = (message, toastType = "success") => {
     setToast({ visible: true, message, type: toastType });
@@ -58,11 +74,10 @@ function Home({ onAddTransaction, token }) {
       return;
     }
 
-    // Match backend expectations. If it's income, ignore the behavioral tags.
     const newTransaction = {
       amount: numericAmount,
       currency,
-      category: category.trim() || "General", // Default to General if left blank
+      category: category.trim() || "General",
       date: new Date().toISOString().split("T")[0],
       description: description.trim() || (type === "INCOME" ? "Income Log" : "Expense Log"),
       impulseBuy: type === "EXPENSE" ? impulseBuy : false,
@@ -77,6 +92,13 @@ function Home({ onAddTransaction, token }) {
     try {
       const savedTransaction = await createTransaction(token, newTransaction);
       onAddTransaction(savedTransaction);
+
+      // If the user typed a brand new category, immediately add it to our local list
+      // so it shows up in the dropdown next time without needing a page refresh!
+      const newCatName = newTransaction.category;
+      if (!userCategories.find(c => c.name.toLowerCase() === newCatName.toLowerCase())) {
+        setUserCategories(prev => [...prev, { name: newCatName }]);
+      }
 
       showToast("Transaction saved successfully!");
 
@@ -95,9 +117,18 @@ function Home({ onAddTransaction, token }) {
     }
   };
 
+  // --- DYNAMIC DROPDOWN LOGIC ---
+  const defaultExpenseCats = ["Food & Dining", "Groceries", "Transportation", "Entertainment", "Utilities", "Shopping"];
+  const defaultIncomeCats = ["Salary", "Freelance", "Investments", "Gift"];
+
+  const currentDefaults = type === "EXPENSE" ? defaultExpenseCats : defaultIncomeCats;
+  const dbCategoryNames = userCategories.map(c => c.name);
+
+  // Combine databases categories with defaults and remove duplicates automatically
+  const combinedCategories = [...new Set([...dbCategoryNames, ...currentDefaults])];
+
   return (
       <>
-        {/* Dynamic Aurora Background (Calm Vertical Breathing) */}
         <style dangerouslySetInnerHTML={{ __html: `
         @keyframes auroraFlow {
           0% { background-position: 50% 35%; }
@@ -115,7 +146,6 @@ function Home({ onAddTransaction, token }) {
 
         <div className="relative w-full min-h-[85vh] flex flex-col items-center p-5 sm:p-12 transition-all duration-300 rounded-3xl border border-[#202020] shadow-[0_24px_80px_rgba(0,0,0,0.6)] animate-aurora">
 
-          {/* Toast Notification */}
           {toast.visible && (
               <div className="fixed top-8 left-1/2 transform -translate-x-1/2 z-50 flex items-center px-6 py-4 rounded-2xl border border-[#deff9a]/30 bg-[#121c15]/95 text-[#deff9a] backdrop-blur-xl shadow-2xl">
                 <span className="text-base font-black uppercase tracking-wider">✓ SUCCESS: </span>
@@ -123,7 +153,6 @@ function Home({ onAddTransaction, token }) {
               </div>
           )}
 
-          {/* Header */}
           <header className="absolute top-8 left-8 sm:top-12 sm:left-12 pointer-events-none w-full">
             <BrandMark />
             <h1 className="mt-1 text-3xl font-black text-white">Home</h1>
@@ -132,14 +161,12 @@ function Home({ onAddTransaction, token }) {
           <main className="flex-1 flex flex-col items-center justify-center w-full mt-20 sm:mt-0">
             <form onSubmit={handleSubmit} className="w-full max-w-4xl flex flex-col items-center justify-center">
 
-              {/* 1. INCOME / EXPENSE TOGGLE */}
               <div className="flex bg-[#121614] p-1.5 border border-[#1f2421] rounded-2xl mb-12 shadow-inner hover:border-[#333] transition-all">
                 {['INCOME', 'EXPENSE'].map((t) => {
                   const isSelected = type === t;
-                  // Determine glowing colors based on the type
                   const activeClasses = t === "INCOME"
                       ? "bg-[#2a3627] text-[#DEFF9A] shadow-[0_4px_20px_rgba(222,255,154,0.15)]"
-                      : "bg-[#3a1a1a] text-[#ff6b6b] shadow-[0_4px_20px_rgba(255,107,107,0.15)]"; // Red for EXPENSE
+                      : "bg-[#3a1a1a] text-[#ff6b6b] shadow-[0_4px_20px_rgba(255,107,107,0.15)]";
 
                   return (
                       <button
@@ -160,12 +187,9 @@ function Home({ onAddTransaction, token }) {
                 })}
               </div>
 
-              {/* 2. GIANT AMOUNT INPUT */}
               <div className="flex items-center justify-center w-full mb-12 px-4">
-                {/* Switched to items-center to fix vertical alignment between symbol and text */}
                 <div className="flex flex-row items-center justify-center">
 
-                  {/* Currency Dropdown overlapping the Symbol */}
                   <div className="relative group cursor-pointer shrink-0 mr-3 sm:mr-5">
                   <span className={`${giantTextClasses} text-white group-hover:text-[#DEFF9A] transition-colors drop-shadow-md`}>
                     {currencySymbols[currency]}
@@ -175,7 +199,6 @@ function Home({ onAddTransaction, token }) {
                         onChange={(e) => { setCurrency(e.target.value); amountInputRef.current?.focus(); }}
                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                     >
-                      {/* ADDED: text-black and bg-white to options to fix the invisible text issue */}
                       {Object.keys(currencySymbols).map(c => (
                           <option key={c} value={c} className="text-black bg-white text-base">
                             {c}
@@ -184,7 +207,6 @@ function Home({ onAddTransaction, token }) {
                     </select>
                   </div>
 
-                  {/* The dynamic growing text input */}
                   <div className="relative grid items-center justify-items-start">
                   <span className={`${giantTextClasses} text-transparent whitespace-pre pointer-events-none`}>
                     {amount || activePlaceholder}
@@ -208,10 +230,8 @@ function Home({ onAddTransaction, token }) {
                 </div>
               </div>
 
-              {/* 3. CATEGORY & VENDOR DESCRIPTION */}
               <div className="w-full max-w-[320px] flex flex-col gap-3 mb-8">
 
-                {/* Category Selector/Adder using native datalist */}
                 <input
                     list="category-options"
                     className="min-h-12 w-full text-center rounded-[12px] border border-[#2b2b2b] bg-[#0b0b0b]/80 px-4 text-sm font-bold text-[#DEFF9A] placeholder-gray-600 transition-all focus:border-[#deff9a] focus:ring-1 focus:ring-[#deff9a] focus:outline-none backdrop-blur-md"
@@ -222,26 +242,12 @@ function Home({ onAddTransaction, token }) {
                     disabled={isSubmitting}
                 />
                 <datalist id="category-options">
-                  {type === "EXPENSE" ? (
-                      <>
-                        <option value="Food & Dining" />
-                        <option value="Groceries" />
-                        <option value="Transportation" />
-                        <option value="Entertainment" />
-                        <option value="Utilities" />
-                        <option value="Shopping" />
-                      </>
-                  ) : (
-                      <>
-                        <option value="Salary" />
-                        <option value="Freelance" />
-                        <option value="Investments" />
-                        <option value="Gift" />
-                      </>
-                  )}
+                  {/* NOW POPULATED DYNAMICALLY! */}
+                  {combinedCategories.map(catName => (
+                      <option key={catName} value={catName} />
+                  ))}
                 </datalist>
 
-                {/* Vendor / Description */}
                 <input
                     className="min-h-12 w-full text-center rounded-[12px] border border-[#2b2b2b] bg-[#0b0b0b]/80 px-4 text-base font-medium text-white placeholder-gray-600 transition-all focus:border-[#deff9a] focus:ring-1 focus:ring-[#deff9a] focus:outline-none backdrop-blur-md"
                     onChange={(event) => setDescription(event.target.value)}
@@ -252,7 +258,6 @@ function Home({ onAddTransaction, token }) {
                 />
               </div>
 
-              {/* 4. BEHAVIORAL TAGS (Only show if logging an Expense) */}
               <div className={`flex gap-4 mb-10 transition-all duration-500 overflow-hidden ${type === "EXPENSE" ? "opacity-100 max-h-20" : "opacity-0 max-h-0"}`}>
                 <label className={`flex cursor-pointer items-center justify-between gap-3 rounded-2xl border px-5 py-3 transition-all duration-200 ${
                     impulseBuy ? "border-[#DEFF9A] bg-[#DEFF9A]/10" : "border-[#1a1a1a] bg-[#000000]/50 hover:border-[#333]"
@@ -306,14 +311,12 @@ function Home({ onAddTransaction, token }) {
 
               </div>
 
-              {/* Error Message */}
               {submitError && (
                   <div className="mb-6 rounded-xl border border-red-500/30 bg-[#2a0e0e] px-5 py-3 text-sm font-bold text-[#ff6b6b]">
                     ⚠️ {submitError}
                   </div>
               )}
 
-              {/* 5. SUBMIT BUTTON */}
               <button
                   className={`min-h-14 w-full max-w-[280px] rounded-2xl px-6 text-sm font-black uppercase tracking-widest text-black transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
                       type === "INCOME"
