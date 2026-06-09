@@ -1,5 +1,6 @@
 package com.moola.backend.security;
 
+import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -29,23 +30,34 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         final String authorizationHeader = request.getHeader("Authorization");
 
         String username = null;
-        String jwt = null;
+        String jwtToken = null;
 
         // tokens come from the frontend as: Authorization: Bearer <token>
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-            jwt = authorizationHeader.substring(7);
-            username = jwtUtils.getUsernameFromToken(jwt);
+            jwtToken = authorizationHeader.substring(7);
+
+            try {
+                // Safely attempt to extract the username
+                username = jwtUtils.getUsernameFromToken(jwtToken);
+            } catch (IllegalArgumentException e) {
+                System.out.println("Unable to get JWT Token");
+            } catch (ExpiredJwtException e) {
+                // THE FIX: Catch the expiration cleanly!
+                System.out.println("JWT Token has expired for this request.");
+            }
         }
 
         // a valid token makes this request count as authenticated
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            if (jwtUtils.validateToken(jwt)) {
+            if (jwtUtils.validateToken(jwtToken)) {
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                         username, null, new ArrayList<>());
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authToken);
             }
         }
+
+        // Continue the filter chain
         chain.doFilter(request, response);
     }
 }

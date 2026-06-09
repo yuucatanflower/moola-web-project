@@ -18,7 +18,6 @@ import java.util.Map;
 import java.util.UUID;
 
 @Service
-// business logic for transactions it also updates the wallet balance when money moves
 public class TransactionService {
     private final TransactionRepository repository;
     private final CategoryRepository categoryRepository;
@@ -39,20 +38,34 @@ public class TransactionService {
         return repository.findAllByUserId(user.getId());
     }
 
-    @Transactional // if one database change fails, the whole transaction save is undone
+    @Transactional
     public Transaction create(Transaction transaction, User user) {
         transaction.setUser(user);
 
-        if (transaction.getCategory() != null && transaction.getCategory().getId() != null) {
-            Category fullCategory = categoryRepository.findByIdAndUserId(transaction.getCategory().getId(), user.getId())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Category not found"));
-            transaction.setCategory(fullCategory);
+        // --- UPGRADED: AUTOMATIC FIND-OR-CREATE CATEGORY RESOLUTION ---
+        if (transaction.getCategory() != null) {
+            Category incomingCategory = transaction.getCategory();
+
+            if (incomingCategory.getId() != null) {
+                // If an ID is provided, look it up normally
+                Category fullCategory = categoryRepository.findByIdAndUserId(incomingCategory.getId(), user.getId())
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Category not found"));
+                transaction.setCategory(fullCategory);
+            } else if (incomingCategory.getName() != null && !incomingCategory.getName().trim().isEmpty()) {
+                // If only a Name string is provided, find it or generate it on the fly!
+                String cleanName = incomingCategory.getName().trim();
+                Category resolvedCategory = categoryRepository.findByUserAndName(user, cleanName)
+                        .orElseGet(() -> {
+                            Category newCategory = new Category(cleanName, user);
+                            return categoryRepository.save(newCategory);
+                        });
+                transaction.setCategory(resolvedCategory);
+            }
         }
 
         Wallet wallet = walletRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Wallet ledger missing for user context"));
 
-        // convert the transaction amount into the wallet currency before changing the balance
         String sourceCurrency = (transaction.getCurrency() != null) ? transaction.getCurrency() : wallet.getCurrency();
         BigDecimal walletNormalizedAmount = currencyService.convertCurrency(
                 sourceCurrency,
@@ -60,7 +73,6 @@ public class TransactionService {
                 transaction.getAmount()
         );
 
-        // income adds money, everything else subtracts money
         if (transaction.getType() != null && transaction.getType().equalsIgnoreCase("INCOME")) {
             wallet.setBalance(wallet.getBalance().add(walletNormalizedAmount));
         } else {
@@ -78,7 +90,6 @@ public class TransactionService {
             Wallet wallet = walletRepository.findByUserId(user.getId())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Wallet ledger missing for user context"));
 
-            // first undo the old transaction's effect on the wallet
             String existingCurrency = (existing.getCurrency() != null) ? existing.getCurrency() : wallet.getCurrency();
             BigDecimal existingNormalizedRefund = currencyService.convertCurrency(
                     existingCurrency,
@@ -86,7 +97,6 @@ public class TransactionService {
                     existing.getAmount()
             );
 
-            // put the wallet back to where it was before the old transaction
             BigDecimal balanceBeforeOldTransaction;
             if (existing.getType() != null && existing.getType().equalsIgnoreCase("INCOME")) {
                 balanceBeforeOldTransaction = wallet.getBalance().subtract(existingNormalizedRefund);
@@ -94,7 +104,6 @@ public class TransactionService {
                 balanceBeforeOldTransaction = wallet.getBalance().add(existingNormalizedRefund);
             }
 
-            // then calculate the new transaction amount in wallet currency
             String updatedCurrency = (updatedTransaction.getCurrency() != null) ? updatedTransaction.getCurrency() : wallet.getCurrency();
             BigDecimal newlyNormalizedDeduction = currencyService.convertCurrency(
                     updatedCurrency,
@@ -102,7 +111,6 @@ public class TransactionService {
                     updatedTransaction.getAmount()
             );
 
-            // apply the updated transaction to the wallet balance
             if (updatedTransaction.getType() != null && updatedTransaction.getType().equalsIgnoreCase("INCOME")) {
                 wallet.setBalance(balanceBeforeOldTransaction.add(newlyNormalizedDeduction));
             } else {
@@ -110,9 +118,8 @@ public class TransactionService {
             }
             walletRepository.save(wallet);
 
-            // store the new transaction fields
             existing.setAmount(updatedTransaction.getAmount());
-            existing.setCurrency(updatedCurrency); // persist updated currency code
+            existing.setCurrency(updatedCurrency);
             existing.setType(updatedTransaction.getType());
             existing.setDate(updatedTransaction.getDate());
             existing.setDescription(updatedTransaction.getDescription());
@@ -120,10 +127,22 @@ public class TransactionService {
             existing.setImpulseBuy(updatedTransaction.isImpulseBuy());
             existing.setRegret(updatedTransaction.isRegret());
 
-            if (updatedTransaction.getCategory() != null && updatedTransaction.getCategory().getId() != null) {
-                Category fullCategory = categoryRepository.findByIdAndUserId(updatedTransaction.getCategory().getId(), user.getId())
-                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Category not found"));
-                existing.setCategory(fullCategory);
+            // --- UPGRADED: HANDLE UPDATE CATEGORIES AUTOMATICALLY TOO ---
+            if (updatedTransaction.getCategory() != null) {
+                Category incomingCategory = updatedTransaction.getCategory();
+                if (incomingCategory.getId() != null) {
+                    Category fullCategory = categoryRepository.findByIdAndUserId(incomingCategory.getId(), user.getId())
+                            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Category not found"));
+                    existing.setCategory(fullCategory);
+                } else if (incomingCategory.getName() != null && !incomingCategory.getName().trim().isEmpty()) {
+                    String cleanName = incomingCategory.getName().trim();
+                    Category resolvedCategory = categoryRepository.findByUserAndName(user, cleanName)
+                            .orElseGet(() -> {
+                                Category newCategory = new Category(cleanName, user);
+                                return categoryRepository.save(newCategory);
+                            });
+                    existing.setCategory(resolvedCategory);
+                }
             } else {
                 existing.setCategory(null);
             }
@@ -134,7 +153,6 @@ public class TransactionService {
     @Transactional
     public Transaction patch(UUID id, Map<String, Object> updates, User user) {
         return repository.findByIdAndUserId(id, user.getId()).map(existing -> {
-            // patch changes small metadata fields only, so the wallet balance does not need recalculation
             if (updates.containsKey("description")) existing.setDescription((String) updates.get("description"));
             if (updates.containsKey("isRecurrent")) existing.setRecurrent((boolean) updates.get("isRecurrent"));
             if (updates.containsKey("isImpulseBuy")) existing.setImpulseBuy((boolean) updates.get("isImpulseBuy"));
@@ -151,7 +169,6 @@ public class TransactionService {
         Wallet wallet = walletRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Wallet ledger missing for user context"));
 
-        // convert to wallet currency before undoing this transaction
         String existingCurrency = (existing.getCurrency() != null) ? existing.getCurrency() : wallet.getCurrency();
         BigDecimal refundAmount = currencyService.convertCurrency(
                 existingCurrency,
@@ -159,7 +176,6 @@ public class TransactionService {
                 existing.getAmount()
         );
 
-        // deleting reverses the original balance change
         if (existing.getType() != null && existing.getType().equalsIgnoreCase("INCOME")) {
             wallet.setBalance(wallet.getBalance().subtract(refundAmount));
         } else {
