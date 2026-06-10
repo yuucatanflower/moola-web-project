@@ -145,11 +145,12 @@ export const updateUser = async (adminPassword, userId, username) =>
         }),
     });
 
-export const updateUserProfile = async (token, profileUpdates) =>
+export const updateUserProfile = async (token, profileData) =>
     request("/auth/profile", {
         method: "PUT",
         headers: {
+            Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
         },
-        body: JSON.stringify(profileUpdates),
+        body: JSON.stringify(profileData),
     });

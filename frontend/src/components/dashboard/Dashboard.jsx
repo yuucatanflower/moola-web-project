@@ -60,11 +60,15 @@ function Dashboard({
           />
 
           <div className="grid min-w-0 content-start gap-5">
-            <AdvisorPanel monthlyExpenses={monthlyExpenses} transactions={transactions} />
+            {/* The sessionToken prop is injected here to authorize backend AI requests */}
+            <AdvisorPanel
+              monthlyExpenses={monthlyExpenses}
+              transactions={transactions}
+              sessionToken={session?.accessToken}
+            />
             <RecurringPayments
               transactions={transactions}
               onDeleteTransaction={onDeleteTransaction}
-
             />
           </div>
         </section>

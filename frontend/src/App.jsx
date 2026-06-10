@@ -84,51 +84,57 @@ function App() {
   };
 
   const handleAuthSubmit = async (event) => {
-    event.preventDefault();
-    setAuthPending(true);
-    setAuthMessage(null);
+      event.preventDefault();
+      setAuthPending(true);
+      setAuthMessage(null);
 
-    const credentials = {
-      username: authForm.username.trim(),
-      password: authForm.password,
-    };
+      const credentials = {
+        username: authForm.username.trim(),
+        password: authForm.password,
+      };
 
-    try {
-      let registeredUser = null;
+      try {
+        let registeredUser = null;
 
-      if (authMode === "register") {
-        registeredUser = await registerUser({
-          ...credentials,
-          hourlyWage: Number(authForm.hourlyWage),
-          startingBalance: Number(authForm.currentBalance || 0),
+        if (authMode === "register") {
+          registeredUser = await registerUser({
+            ...credentials,
+            hourlyWage: Number(authForm.hourlyWage),
+            startingBalance: Number(authForm.currentBalance || 0),
+          });
+        }
+
+        const loginResponse = await loginUser(credentials);
+        const nextSession = buildSession({
+          accessToken: loginResponse.accessToken,
+          currentBalance: authForm.currentBalance,
+          loginUserObj: loginResponse.user,
+          registeredUser,
+          username: credentials.username,
         });
+
+        if (loginResponse.user && loginResponse.user.advisorTone) {
+          nextSession.advisorTone = loginResponse.user.advisorTone;
+          if (!nextSession.user) nextSession.user = {};
+          nextSession.user.advisorTone = loginResponse.user.advisorTone;
+        }
+
+        saveSession(nextSession);
+        setSession(nextSession);
+        setAuthForm(EMPTY_AUTH_FORM);
+      } catch (error) {
+        setAuthMessage({
+          type: "error",
+          text:
+            error.message ||
+            (authMode === "register"
+              ? "Account creation failed. Check the backend and try another username."
+              : "Login failed. Check your username, password, and backend server."),
+        });
+      } finally {
+        setAuthPending(false);
       }
-
-      const loginResponse = await loginUser(credentials);
-      const nextSession = buildSession({
-        accessToken: loginResponse.accessToken,
-        currentBalance: authForm.currentBalance,
-        loginUserObj: loginResponse.user,
-        registeredUser,
-        username: credentials.username,
-      });
-
-      saveSession(nextSession);
-      setSession(nextSession);
-      setAuthForm(EMPTY_AUTH_FORM);
-    } catch (error) {
-      setAuthMessage({
-        type: "error",
-        text:
-          error.message ||
-          (authMode === "register"
-            ? "Account creation failed. Check the backend and try another username."
-            : "Login failed. Check your username, password, and backend server."),
-      });
-    } finally {
-      setAuthPending(false);
-    }
-  };
+    };
 
   const handleLogout = () => {
     clearSession();
@@ -141,23 +147,45 @@ function App() {
     setActiveTab("home");
   };
 
-  // Profile patch handler to update stateful session details locally
-  const handleUpdateProfile = (updatedData) => {
-    setSession((currentSession) => {
-      if (!currentSession) return currentSession;
+// Profile patch handler to update stateful session details locally
+const handleUpdateProfile = async (updatedData) => {
+    try {
+      // 1. Send the updated tone to your backend API using safe fallbacks
+      await updateUserProfile(session.accessToken, {
+        currentUsername: session.username || session.user?.username,
+        newUsername: updatedData.username,
+        hourlyWage: updatedData.hourlyWage,
+        advisorTone: updatedData.advisorTone,
+        preferredCurrency: updatedData.preferredCurrency
+      });
 
-      const nextSession = {
-        ...currentSession,
-        user: {
-          ...currentSession.user,
-          username: updatedData.username ?? currentSession.user.username,
-          hourlyWage: updatedData.hourlyWage ?? currentSession.user.hourlyWage,
-        },
-      };
+      // 2. Update the local state instantly across all potential object paths so it stays highlighted
+      setSession((currentSession) => {
+        if (!currentSession) return currentSession;
 
-      saveSession(nextSession);
-      return nextSession;
-    });
+        const nextSession = {
+          ...currentSession,
+          username: updatedData.username ?? currentSession.username,
+          hourlyWage: updatedData.hourlyWage ?? currentSession.hourlyWage,
+          advisorTone: updatedData.advisorTone ?? currentSession.advisorTone,
+          user: {
+            ...currentSession.user,
+            username: updatedData.username ?? currentSession.user?.username,
+            hourlyWage: updatedData.hourlyWage ?? currentSession.user?.hourlyWage,
+            advisorTone: updatedData.advisorTone ?? currentSession.user?.advisorTone,
+          },
+        };
+
+        if (typeof saveSession === "function") {
+          saveSession(nextSession);
+        }
+        return nextSession;
+      });
+
+      alert("Successfully saved preferences!");
+    } catch (error) {
+      alert("Error with Saving: " + error.message);
+    }
   };
 
   const updateSessionBalance = (balanceUpdater) => {

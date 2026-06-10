@@ -1,21 +1,71 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import BrandMark from "../common/BrandMark";
 
 function Settings({ session, onUpdateProfile, onLogout }) {
+  // Safely extract properties by checking fallback paths from buildSession
+  const initialUsername = session?.username || session?.user?.username || "";
+  const initialHourlyWage = session?.user?.hourlyWage || session?.hourlyWage || "15";
+  const initialTone = session?.user?.advisorTone || session?.advisorTone || "roast";
+
   // Account profile state
-  const [username, setUsername] = useState(session?.user?.username || "");
-  const [hourlyWage, setHourlyWage] = useState(session?.user?.hourlyWage || "15");
+  const [username, setUsername] = useState(initialUsername);
+  const [hourlyWage, setHourlyWage] = useState(initialHourlyWage);
 
   // App-specific behavioral features state
   const [salaryShield, setSalaryShield] = useState(false);
   const [cooldownTimer, setCooldownTimer] = useState("24");
-  const [advisorTone, setAdvisorTone] = useState("roast");
+  const [advisorTone, setAdvisorTone] = useState(initialTone);
   const [preferredCurrency, setPreferredCurrency] = useState("EUR");
+
+  // Synchronize component state values smoothly when routing or mutating parent context
+  useEffect(() => {
+    if (session) {
+      setUsername(session?.username || session?.user?.username || "");
+      setHourlyWage(session?.user?.hourlyWage || session?.hourlyWage || "15");
+      setAdvisorTone(session?.user?.advisorTone || session?.advisorTone || "roast");
+      console.log("Settings panel layout states re-synchronized with active application session mapping.");
+    }
+  }, [session]);
+
+  const handleCurrencyChange = (e) => {
+    const newCurrency = e.target.value;
+    setPreferredCurrency(newCurrency);
+    if (onUpdateProfile) {
+      onUpdateProfile({
+        username,
+        hourlyWage: Number(hourlyWage),
+        advisorTone,
+        preferredCurrency: newCurrency // Send the new currency immediately
+      });
+    }
+  };
+
+  const handleToneChange = (newTone) => {
+    setAdvisorTone(newTone);
+    if (onUpdateProfile) {
+      onUpdateProfile({
+        username,
+        hourlyWage: Number(hourlyWage),
+        advisorTone: newTone,
+        preferredCurrency // Ensure currency isn't lost when changing tone
+      });
+    }
+  };
 
   const handleSaveProfile = (e) => {
     e.preventDefault();
+    console.log("-> Save-Button pressed! Sending Data:", { username, hourlyWage, advisorTone });
+
     if (onUpdateProfile) {
-      onUpdateProfile({ username, hourlyWage: Number(hourlyWage) });
+      // Include advisorTone in the payload sent to the backend
+      onUpdateProfile({
+        username,
+        hourlyWage: Number(hourlyWage),
+        advisorTone,
+        preferredCurrency
+      });
+    } else {
+      console.error("-> ERROR: onUpdateProfile is not sent to Settings!");
     }
   };
 
@@ -137,7 +187,7 @@ function Settings({ session, onUpdateProfile, onLogout }) {
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
-                onClick={() => setAdvisorTone("roast")}
+                onClick={() => handleToneChange("roast")}
                 className={`min-h-10 rounded-[8px] border font-bold text-xs transition ${
                   advisorTone === "roast"
                     ? "border-[#DEFF9A] bg-[#DEFF9A]/10 text-white"
@@ -148,7 +198,7 @@ function Settings({ session, onUpdateProfile, onLogout }) {
               </button>
               <button
                 type="button"
-                onClick={() => setAdvisorTone("zen")}
+                onClick={() => handleToneChange("zen")}
                 className={`min-h-10 rounded-[8px] border font-bold text-xs transition ${
                   advisorTone === "zen"
                     ? "border-[#DEFF9A] bg-[#DEFF9A]/10 text-white"
@@ -165,7 +215,7 @@ function Settings({ session, onUpdateProfile, onLogout }) {
             <label className="text-xs font-bold uppercase text-[#daffde]/55">Primary Currency</label>
             <select
               value={preferredCurrency}
-              onChange={(e) => setPreferredCurrency(e.target.value)}
+              onChange={handleCurrencyChange}
               className="min-h-12 w-full rounded-[10px] border border-[#2b2b2b] bg-[#0b0b0b] px-4 text-base font-medium text-white transition focus:border-[#deff9a]/55 focus:outline-none"
             >
               <option value="EUR">Euro (€)</option>
@@ -181,7 +231,7 @@ function Settings({ session, onUpdateProfile, onLogout }) {
             <button
               onClick={onLogout}
               type="button"
-              className="min-h-12 w-full rounded-[10px] border border-[#ff6b6b]/30 bg-[#ff6b6b]/5 px-4 text-base font-bold text(#ff6b6b) transition hover:border-[#ff6b6b] hover:bg-[#ff6b6b]/10"
+              className="min-h-12 w-full rounded-[10px] border border-[#ff6b6b]/30 bg-[#ff6b6b]/5 px-4 text-base font-bold transition hover:border-[#ff6b6b] hover:bg-[#ff6b6b]/10"
               style={{ color: "#ff6b6b" }}
             >
               Disconnect Session (Logout)
