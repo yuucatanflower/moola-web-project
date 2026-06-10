@@ -1,6 +1,38 @@
 import { useState } from "react";
 import { formatAmount } from "../../utils/formatters";
 
+// Automatically fetches brand logos using Google's reliable favicon service
+function BrandIcon({ name }) {
+  const [hasError, setHasError] = useState(false);
+
+  // Blacklist of generic terms that shouldn't attempt to load a brand logo
+  const genericTerms = ["salary", "income", "wage", "deposit", "transfer", "cash"];
+  const cleanName = name ? name.toLowerCase() : "";
+  const isGeneric = genericTerms.some(term => cleanName.includes(term));
+
+  // Fallback to text circle if no name, image error, or generic financial term
+  if (!name || hasError || isGeneric) {
+    return (
+      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[#2b2b2b] bg-[#1a1a1a] text-[10px] font-bold text-white shadow-sm">
+        {name ? name.charAt(0).toUpperCase() : "?"}
+      </div>
+    );
+  }
+
+  // Isolate the brand keyword (e.g., "Netflix" or "Spotify")
+  const firstWord = name.split(" ")[0].toLowerCase().replace(/[^a-z0-9]/g, "");
+  const logoUrl = `https://www.google.com/s2/favicons?sz=128&domain=${firstWord}.com`;
+
+  return (
+    <img
+      src={logoUrl}
+      alt=""
+      onError={() => setHasError(true)}
+      className="h-7 w-7 shrink-0 rounded-full border border-[#2b2b2b] bg-white object-contain p-1 shadow-sm"
+    />
+  );
+}
+
 function CategoryDot({ color }) {
   return <span className="mt-1 h-2.5 w-2.5 rounded-full" style={{ backgroundColor: color }} />;
 }
@@ -226,7 +258,13 @@ function TransactionTable({ onDeleteTransaction, onUpdateTransaction, transactio
                   ) : (
                     <>
                       <span>{Number(transaction.amount ?? 0).toFixed(2)}</span>
-                      <span className="text-[#daffde]/70">{transaction.description}</span>
+
+                      {/* dynamic auto-generated brand profile image */}
+                      <span className="flex items-center gap-2 text-[#daffde]/70">
+                        <BrandIcon name={transaction.description || getTransactionCategory(transaction)} />
+                        {transaction.description}
+                      </span>
+
                       <div className="flex justify-end gap-2">
                         <button
                           aria-label="Edit transaction"
