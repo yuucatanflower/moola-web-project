@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 
-// Automatically fetches brand logos using the free Clearbit API
 const BrandIcon = ({ name }) => {
   const [hasError, setHasError] = useState(false);
 
