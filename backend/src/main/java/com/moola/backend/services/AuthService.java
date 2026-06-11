@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
+import com.moola.backend.models.Wallet;
+import com.moola.backend.repositories.WalletRepository;
 
 @Service
 // contains register and login logic for users
@@ -17,12 +19,19 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtils jwtUtils;
+    private final WalletRepository walletRepository;
 
     // injects the database, password, and token helpers
-    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtUtils jwtUtils) {
+    public AuthService(
+            UserRepository userRepository,
+            PasswordEncoder passwordEncoder,
+            JwtUtils jwtUtils,
+            WalletRepository walletRepository
+    ) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtils = jwtUtils;
+        this.walletRepository = walletRepository;
     }
 
     public String login(String username, String password) {
@@ -52,7 +61,16 @@ public class AuthService {
         // save the user
         User savedUser = userRepository.save(user);
 
-        // wallet creation can be added here if startingbalance should be saved
+        Wallet wallet = new Wallet();
+        wallet.setUser(savedUser);
+        wallet.setBalance(
+                startingBalance != null
+                        ? startingBalance
+                        : BigDecimal.ZERO
+        );
+        wallet.setCurrency("EUR");
+
+        walletRepository.save(wallet);
 
         return savedUser;
     }

@@ -17,6 +17,7 @@ public class AdminController {
 
     public AdminController(AdminService adminService) {
         this.adminService = adminService;
+
     }
 
     @GetMapping("/users")
