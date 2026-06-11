@@ -62,6 +62,7 @@ public class AuthController {
         safeUserData.put("role", user.getRole());
         safeUserData.put("balance", currentBalance);
         safeUserData.put("currency", walletCurrency);
+        safeUserData.put("advisorTone", user.getAdvisorTone()); // Included to remember user preference upon login
 
         Map<String, Object> response = new HashMap<>();
         response.put("accessToken", token);
@@ -72,17 +73,23 @@ public class AuthController {
 
     @PutMapping("/profile")
     public ResponseEntity<Map<String, Object>> updateProfile(@RequestBody Map<String, Object> body) {
-        // 1 resolve and validate the target username tracking parameters
-        String username = (String) body.get("username");
-        if (username == null || username.trim().isEmpty()) {
-            throw new RuntimeException("Username cannot be empty");
+        // Extract the original username to find the correct database record
+        String currentUsername = (String) body.get("currentUsername");
+        if (currentUsername == null || currentUsername.trim().isEmpty()) {
+            throw new RuntimeException("Current username is required");
         }
 
-        // 2 fetch the corresponding persistent domain entity from the database mapping context
-        User user = userRepository.findByUsername(username.trim())
+        // Fetch user using the old username
+        User user = userRepository.findByUsername(currentUsername.trim())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // 3 extract and parse incoming numeric data values explicitly
+        // Apply the new username if it was changed
+        String newUsername = (String) body.get("newUsername");
+        if (newUsername != null && !newUsername.trim().isEmpty()) {
+            user.setUsername(newUsername.trim());
+        }
+
+        // Apply hourly wage update
         if (body.containsKey("hourlyWage")) {
             Object wageObj = body.get("hourlyWage");
             if (wageObj != null) {
@@ -90,10 +97,18 @@ public class AuthController {
             }
         }
 
-        // 4 save modifications back to the storage layer via jpa abstraction runtime routines
+        // Apply advisor personality tone update
+        if (body.containsKey("advisorTone")) {
+            String newTone = (String) body.get("advisorTone");
+            if (newTone != null) {
+                user.setAdvisorTone(newTone.trim());
+            }
+        }
+
+        // Save modifications to the database
         User updatedUser = userRepository.save(user);
 
-        // 5 structure a synchronized safe object payload representing state mutations matching local structures
+        // Prepare the response payload
         BigDecimal currentBalance = BigDecimal.ZERO;
         String walletCurrency = "EUR";
         if (updatedUser.getWallet() != null) {
@@ -108,12 +123,13 @@ public class AuthController {
         safeUserData.put("role", updatedUser.getRole());
         safeUserData.put("balance", currentBalance);
         safeUserData.put("currency", walletCurrency);
+        safeUserData.put("advisorTone", updatedUser.getAdvisorTone()); // Synchronizes frontend state context after updates
 
         return ResponseEntity.ok(safeUserData);
     }
 }
 
-// small request object used only for registration json coming from the frontend
+// Small request DTO used exclusively for registration mapping structures
 class RegisterRequest {
     private String username;
     private String password;

@@ -22,10 +22,18 @@ public class AIService {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
-    public String getFinancialAdvice(String automatedTransactionData) {
+    public String getFinancialAdvice(String automatedTransactionData, String advisorTone) {
         if (apiKey == null || apiKey.trim().isEmpty() || apiKey.contains("YOUR_GROQ")) {
             return "Provide a valid Groq API key to check your spending.";
         }
+
+        // Bulletproof check for the requested personality mode
+        boolean isZen = advisorTone != null && advisorTone.trim().equalsIgnoreCase("zen");
+
+        // Dynamically assign the system instructions based on the selected tone
+        String systemPrompt = isZen
+                ? "You are a calm, highly supportive, and gentle financial advisor named 'Moola'. Praise the user for any good habits, gently suggest improvements without any judgment or harshness. Keep it peaceful and encouraging. Maximum 3 sentences."
+                : "You are 'Moola', a brutal, savage, no-filter financial advisor. Your job is to somewhat aggressively judge the user's spending. Look at the raw transaction data, call out the exact dollar amounts they wasted, and brutally mock any items marked as 'impulse=true'. Be cynical and sharp. Maximum 3 sentences.";
 
         try {
             HttpHeaders headers = new HttpHeaders();
@@ -35,7 +43,7 @@ public class AIService {
             Map<String, Object> requestBody = Map.of(
                     "model", "llama-3.1-8b-instant",
                     "messages", List.of(
-                            Map.of("role", "system", "content", "You are 'Moola', a brutal, savage, no-filter financial advisor. Your job is to somewhat aggressively judge the user's spending while being understanding and a mentor-like figure. Look at the raw transaction data, call out the exact dollar amounts they wasted, and brutally mock any items marked as 'impulse=true' or 'regret=true'. Be cynical and sharp. Maximum 3 sentences. Do not use polite greetings or generic advice."),
+                            Map.of("role", "system", "content", systemPrompt),
                             Map.of("role", "user", "content", "Analyze these raw student transaction records: " + automatedTransactionData)
                     ),
                     "temperature", 0.95,
