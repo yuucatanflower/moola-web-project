@@ -62,7 +62,7 @@ public class AuthController {
         safeUserData.put("role", user.getRole());
         safeUserData.put("balance", currentBalance);
         safeUserData.put("currency", walletCurrency);
-        safeUserData.put("advisorTone", user.getAdvisorTone()); // Included to remember user preference upon login
+        safeUserData.put("advisorTone", user.getAdvisorTone()); // included to remember user preference upon login
 
         Map<String, Object> response = new HashMap<>();
         response.put("accessToken", token);
@@ -73,23 +73,23 @@ public class AuthController {
 
     @PutMapping("/profile")
     public ResponseEntity<Map<String, Object>> updateProfile(@RequestBody Map<String, Object> body) {
-        // Extract the original username to find the correct database record
+        // extract the original username to find the correct database record
         String currentUsername = (String) body.get("currentUsername");
         if (currentUsername == null || currentUsername.trim().isEmpty()) {
             throw new RuntimeException("Current username is required");
         }
 
-        // Fetch user using the old username
+        // fetch user using the old username
         User user = userRepository.findByUsername(currentUsername.trim())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // Apply the new username if it was changed
+        // apply the new username if it was changed
         String newUsername = (String) body.get("newUsername");
         if (newUsername != null && !newUsername.trim().isEmpty()) {
             user.setUsername(newUsername.trim());
         }
 
-        // Apply hourly wage update
+        // apply hourly wage update
         if (body.containsKey("hourlyWage")) {
             Object wageObj = body.get("hourlyWage");
             if (wageObj != null) {
@@ -97,7 +97,7 @@ public class AuthController {
             }
         }
 
-        // Apply advisor personality tone update
+        // apply advisor personality tone update
         if (body.containsKey("advisorTone")) {
             String newTone = (String) body.get("advisorTone");
             if (newTone != null) {
@@ -105,10 +105,10 @@ public class AuthController {
             }
         }
 
-        // Save modifications to the database
+        // save modifications to the database
         User updatedUser = userRepository.save(user);
 
-        // Prepare the response payload
+        // prepare the response payload
         BigDecimal currentBalance = BigDecimal.ZERO;
         String walletCurrency = "EUR";
         if (updatedUser.getWallet() != null) {
@@ -123,13 +123,13 @@ public class AuthController {
         safeUserData.put("role", updatedUser.getRole());
         safeUserData.put("balance", currentBalance);
         safeUserData.put("currency", walletCurrency);
-        safeUserData.put("advisorTone", updatedUser.getAdvisorTone()); // Synchronizes frontend state context after updates
+        safeUserData.put("advisorTone", updatedUser.getAdvisorTone()); // synchronizes frontend state context after updates
 
         return ResponseEntity.ok(safeUserData);
     }
 }
 
-// Small request DTO used exclusively for registration mapping structures
+// small request dto used exclusively for registration mapping structures
 class RegisterRequest {
     private String username;
     private String password;

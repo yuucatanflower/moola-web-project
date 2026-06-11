@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/features")
 @CrossOrigin(origins = "*")
-// Handles specific application features such as dynamic currency conversion and automated AI insights
+// handles specific application features such as dynamic currency conversion and automated ai insights
 public class FeatureController {
 
     private final AIService aiService;
@@ -24,7 +24,7 @@ public class FeatureController {
     private final TransactionService transactionService;
     private final UserRepository userRepository;
 
-    // Added UserRepository to the constructor to track user preference profiles
+    // adds userrepository to track user preference profiles
     public FeatureController(AIService aiService, CurrencyService currencyService, TransactionService transactionService, UserRepository userRepository) {
         this.aiService = aiService;
         this.currencyService = currencyService;
@@ -34,11 +34,11 @@ public class FeatureController {
 
     @GetMapping("/advice")
     public ResponseEntity<Map<String, String>> getAutomatedAdvice(@RequestParam(defaultValue = "30") int days, Principal principal) {
-        // Fetch the corresponding persistent user context from the database mapping layer
+        // fetch the corresponding persistent user context from the database mapping layer
         User user = userRepository.findByUsername(principal.getName())
                 .orElseThrow(() -> new RuntimeException("Authenticated user metadata context not found"));
 
-        // Compile and format active historical ledger rows into a structural summary string
+        // compile and format active historical ledger rows into a structural summary string
         String dataSummary = transactionService.getAll(user).stream()
                 .map(t -> {
                     String safeDesc = t.getDescription() != null ? t.getDescription() : "No description";
@@ -48,7 +48,7 @@ public class FeatureController {
                 })
                 .collect(Collectors.joining("; "));
 
-        // Resolved the signature mismatch by explicitly passing user preference configurations
+        // pass the selected user tone into the ai service
         String advice = aiService.getFinancialAdvice(dataSummary, user.getAdvisorTone());
 
         return ResponseEntity.ok(Map.of("advice", advice));

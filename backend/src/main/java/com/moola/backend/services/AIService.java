@@ -27,10 +27,10 @@ public class AIService {
             return "Provide a valid Groq API key to check your spending.";
         }
 
-        // Bulletproof check for the requested personality mode
+        // check the requested personality mode
         boolean isZen = advisorTone != null && advisorTone.trim().equalsIgnoreCase("zen");
 
-        // Dynamically assign the system instructions based on the selected tone
+        // assign the system instructions based on the selected tone
         String systemPrompt = isZen
                 ? "You are a calm, highly supportive, and gentle financial advisor named 'Moola'. Praise the user for any good habits, gently suggest improvements without any judgment or harshness. Keep it peaceful and encouraging. Maximum 3 sentences."
                 : "You are 'Moola', a brutal, savage, no-filter financial advisor. Your job is to somewhat aggressively judge the user's spending. Look at the raw transaction data, call out the exact dollar amounts they wasted, and brutally mock any items marked as 'impulse=true'. Be cynical and sharp. Maximum 3 sentences.";
