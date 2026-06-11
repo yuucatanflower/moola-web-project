@@ -8,7 +8,7 @@ import java.math.RoundingMode;
 import java.util.Map;
 
 @Service
-// talks to the external Frankfurter currency API and returns converted money amounts
+// talks to the external frankfurter currency api and returns converted money amounts
 public class CurrencyService {
 
     @Value("${FRANKFURTER_URL}")

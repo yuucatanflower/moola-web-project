@@ -9,7 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @ControllerAdvice
-// turns selected backend errors into small JSON responses that are easier for the frontend to read
+// turns selected backend errors into small json responses that are easier for the frontend to read
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(ResponseStatusException.class)
@@ -17,7 +17,7 @@ public class GlobalExceptionHandler {
         Map<String, String> errorBody = new HashMap<>();
         errorBody.put("error", ex.getReason());
 
-        // keep the original HTTP status, like 404 for not found
+        // keep the original http status, like 404 for not found
         return new ResponseEntity<>(errorBody, ex.getStatusCode());
     }
 }

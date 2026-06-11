@@ -22,7 +22,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-// tests the AI service without calling the real Groq API
+// tests the ai service without calling the real groq api
 public class AIServiceTest {
 
     @Mock
@@ -50,7 +50,7 @@ public class AIServiceTest {
     void getFinancialAdvice_WithValidResponse_ShouldReturnAdviceString() {
         ReflectionTestUtils.setField(aiService, "apiKey", "valid-key");
 
-        // fake the nested response shape that Groq returns
+        // fake the nested response shape that groq returns
         Map<String, String> messageMap = Map.of("content", "Stop buying expensive coffee.");
         Map<String, Object> choiceMap = Map.of("message", messageMap);
         Map<String, Object> bodyMap = Map.of("choices", List.of(choiceMap));

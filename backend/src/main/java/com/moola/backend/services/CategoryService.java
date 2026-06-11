@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @Service
+// handles category rules and makes sure categories stay tied to one user
 public class CategoryService {
     private final CategoryRepository categoryRepository;
     private final TransactionRepository transactionRepository;
@@ -39,7 +40,7 @@ public class CategoryService {
     public Category updateCategory(UUID id, Category updatedCategory, User user) {
         Category existing = getCategoryById(id, user);
         existing.setName(updatedCategory.getName());
-        existing.setColorHex(updatedCategory.getColorHex()); // Keeps your optional hex colors clean
+        existing.setColorHex(updatedCategory.getColorHex()); // keeps optional hex colors clean
         return categoryRepository.save(existing);
     }
 

@@ -1,6 +1,6 @@
 package com.moola.backend.models;
 
-import com.fasterxml.jackson.annotation.JsonCreator; // ◄ 1. Add this import
+import com.fasterxml.jackson.annotation.JsonCreator;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
@@ -14,6 +14,7 @@ import java.util.UUID;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+// database object for one spending category
 public class Category {
 
     @Id
@@ -32,13 +33,13 @@ public class Category {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    // This tells Spring's JSON parser: "If you just get a String, use it to set the name!"
+    // lets spring create a category from a plain json string
     @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
     public Category(String name) {
         this.name = name;
     }
 
-    // (Keep your existing custom constructor below)
+    // creates a category with a generated color when only a name is provided
     public Category(String name, User user) {
         this.name = name;
         this.user = user;

@@ -10,6 +10,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/admin")
+// exposes admin-only user management endpoints
 public class AdminController {
 
     private final AdminService adminService;

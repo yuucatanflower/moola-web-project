@@ -3,7 +3,7 @@ package com.moola.backend;
 import com.moola.backend.models.User;
 import com.moola.backend.models.Wallet;
 import com.moola.backend.repositories.UserRepository;
-import com.moola.backend.repositories.WalletRepository; // Added missing import
+import com.moola.backend.repositories.WalletRepository; // added missing import
 import com.moola.backend.security.JwtUtils;
 import com.moola.backend.services.AuthService;
 import org.junit.jupiter.api.BeforeEach;
@@ -107,18 +107,18 @@ public class AuthServiceTest {
 
     @Test
     void register_WithNullStartingBalance_ShouldDefaultWalletToZero() {
-        // Arrange
+        // arrange
         when(passwordEncoder.encode("rawPassword")).thenReturn("hashedPassword");
         when(userRepository.save(any(User.class))).thenReturn(testUser);
 
-        // Capture the wallet passed to walletRepository.save() to inspect its initial balance state
+        // capture the wallet passed to walletrepositorysave() to inspect its initial balance state
         when(walletRepository.save(any(Wallet.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        // Act
-        // Passing null as the initial balance argument to trigger the fallback filter condition
+        // act
+        // passing null as the initial balance argument to trigger the fallback filter condition
         User result = authService.register(testUser, null);
 
-        // Assert
+        // assert
         assertNotNull(result);
         verify(walletRepository, times(1)).save(argThat(wallet ->
                 wallet.getBalance().compareTo(BigDecimal.ZERO) == 0 && "EUR".equals(wallet.getCurrency())

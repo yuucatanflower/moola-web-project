@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 @Service
-// calls the Groq REST API and turns recent transactions into short spending advice
+// calls the groq rest api and turns recent transactions into short spending advice
 public class AIService {
 
     @Value("${GROQ_KEY}")

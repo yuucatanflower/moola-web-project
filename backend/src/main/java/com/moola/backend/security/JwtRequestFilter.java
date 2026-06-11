@@ -14,7 +14,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 @Component
-// reads the Bearer token from each request and logs the user into Spring Security for that request
+// reads the bearer token from each request and logs the user into spring security for that request
 public class JwtRequestFilter extends OncePerRequestFilter {
 
     private final JwtUtils jwtUtils;
@@ -32,17 +32,17 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         String username = null;
         String jwtToken = null;
 
-        // tokens come from the frontend as: Authorization: Bearer <token>
+        // tokens come from the frontend as: authorization: bearer <token>
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
             jwtToken = authorizationHeader.substring(7);
 
             try {
-                // Safely attempt to extract the username
+                // safely attempt to extract the username
                 username = jwtUtils.getUsernameFromToken(jwtToken);
             } catch (IllegalArgumentException e) {
                 System.out.println("Unable to get JWT Token");
             } catch (ExpiredJwtException e) {
-                // THE FIX: Catch the expiration cleanly!
+                // catch expired tokens cleanly
                 System.out.println("JWT Token has expired for this request.");
             }
         }
@@ -57,7 +57,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             }
         }
 
-        // Continue the filter chain
+        // continue the filter chain
         chain.doFilter(request, response);
     }
 }

@@ -72,17 +72,17 @@ public class AuthController {
 
     @PutMapping("/profile")
     public ResponseEntity<Map<String, Object>> updateProfile(@RequestBody Map<String, Object> body) {
-        // 1. Resolve and validate the target username tracking parameters
+        // 1 resolve and validate the target username tracking parameters
         String username = (String) body.get("username");
         if (username == null || username.trim().isEmpty()) {
             throw new RuntimeException("Username cannot be empty");
         }
 
-        // 2. Fetch the corresponding persistent domain entity from the database mapping context
+        // 2 fetch the corresponding persistent domain entity from the database mapping context
         User user = userRepository.findByUsername(username.trim())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // 3. Extract and parse incoming numeric data values explicitly
+        // 3 extract and parse incoming numeric data values explicitly
         if (body.containsKey("hourlyWage")) {
             Object wageObj = body.get("hourlyWage");
             if (wageObj != null) {
@@ -90,10 +90,10 @@ public class AuthController {
             }
         }
 
-        // 4. Save modifications back to the storage layer via JPA abstraction runtime routines
+        // 4 save modifications back to the storage layer via jpa abstraction runtime routines
         User updatedUser = userRepository.save(user);
 
-        // 5. Structure a synchronized safe object payload representing state mutations matching local structures
+        // 5 structure a synchronized safe object payload representing state mutations matching local structures
         BigDecimal currentBalance = BigDecimal.ZERO;
         String walletCurrency = "EUR";
         if (updatedUser.getWallet() != null) {
@@ -113,7 +113,7 @@ public class AuthController {
     }
 }
 
-// small request object used only for registration JSON coming from the frontend
+// small request object used only for registration json coming from the frontend
 class RegisterRequest {
     private String username;
     private String password;

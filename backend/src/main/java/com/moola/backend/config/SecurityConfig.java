@@ -1,4 +1,4 @@
-package com.moola.backend.config; // or com.moola.backend.security depending on your exact package
+package com.moola.backend.config;
 
 import com.moola.backend.security.JwtRequestFilter;
 import org.springframework.context.annotation.Bean;
@@ -21,6 +21,7 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
+// sets up jwt security, password hashing, cors, and stateless sessions
 public class SecurityConfig {
 
     private final JwtRequestFilter jwtRequestFilter;
@@ -29,7 +30,7 @@ public class SecurityConfig {
         this.jwtRequestFilter = jwtRequestFilter;
     }
 
-    // KEEP THIS ONE (Delete the other method named 'filterChain' if it exists below or above)
+    // this filter chain protects every endpoint except login and register
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
