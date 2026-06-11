@@ -15,7 +15,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/transactions")
 @CrossOrigin(origins = "*")
-// main transaction API this is the easiest controller to use for explaining resource methods
+// main transaction api this is the easiest controller to use for explaining resource methods
 public class TransactionController {
     private final TransactionService transactionService;
     private final UserRepository userRepository;
@@ -52,7 +52,7 @@ public class TransactionController {
             // check the id format before passing it to the service
             transactionUuid = java.util.UUID.fromString(id);
         } catch (IllegalArgumentException e) {
-            // bad ids are shown as "not found" so the API answer stays simple
+            // bad ids are shown as "not found" so the api answer stays simple
             throw new org.springframework.web.server.ResponseStatusException(
                     HttpStatus.NOT_FOUND, "Transaction ID structure is invalid or not found."
             );

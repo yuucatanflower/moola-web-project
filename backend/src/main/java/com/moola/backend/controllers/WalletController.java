@@ -27,7 +27,7 @@ public class WalletController {
 
     @GetMapping
     public ResponseEntity<Wallet> getWallet(Principal principal) {
-        // find the user from the JWT security context
+        // find the user from the jwt security context
         User user = userRepository.findByUsername(principal.getName())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User context invalid"));
 

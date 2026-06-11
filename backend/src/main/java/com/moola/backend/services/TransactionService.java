@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @Service
+// handles transaction rules and updates wallet balances
 public class TransactionService {
     private final TransactionRepository repository;
     private final CategoryRepository categoryRepository;
@@ -42,17 +43,17 @@ public class TransactionService {
     public Transaction create(Transaction transaction, User user) {
         transaction.setUser(user);
 
-        // --- UPGRADED: AUTOMATIC FIND-OR-CREATE CATEGORY RESOLUTION ---
+        // find or create the category for a new transaction
         if (transaction.getCategory() != null) {
             Category incomingCategory = transaction.getCategory();
 
             if (incomingCategory.getId() != null) {
-                // If an ID is provided, look it up normally
+                // if an id is provided, look it up normally
                 Category fullCategory = categoryRepository.findByIdAndUserId(incomingCategory.getId(), user.getId())
                         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Category not found"));
                 transaction.setCategory(fullCategory);
             } else if (incomingCategory.getName() != null && !incomingCategory.getName().trim().isEmpty()) {
-                // If only a Name string is provided, find it or generate it on the fly!
+                // if only a name string is provided, find it or create it
                 String cleanName = incomingCategory.getName().trim();
                 Category resolvedCategory = categoryRepository.findByUserAndName(user, cleanName)
                         .orElseGet(() -> {
@@ -127,7 +128,7 @@ public class TransactionService {
             existing.setImpulseBuy(updatedTransaction.isImpulseBuy());
             existing.setRegret(updatedTransaction.isRegret());
 
-            // --- UPGRADED: HANDLE UPDATE CATEGORIES AUTOMATICALLY TOO ---
+            // find or create the category for an updated transaction
             if (updatedTransaction.getCategory() != null) {
                 Category incomingCategory = updatedTransaction.getCategory();
                 if (incomingCategory.getId() != null) {

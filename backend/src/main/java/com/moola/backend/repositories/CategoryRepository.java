@@ -1,7 +1,7 @@
 package com.moola.backend.repositories;
 
 import com.moola.backend.models.Category;
-import com.moola.backend.models.User; // Make sure to import User!
+import com.moola.backend.models.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 import java.util.Optional;
@@ -13,7 +13,6 @@ public interface CategoryRepository extends JpaRepository<Category, UUID> {
     Optional<Category> findByIdAndUserId(UUID id, UUID userId);
 
 
-    // Spring Boot automatically translates this into:
-    // SELECT * FROM categories WHERE user_id = ? AND name = ? LIMIT 1;
+    // finds an existing category by owner and name
     Optional<Category> findByUserAndName(User user, String name);
 }

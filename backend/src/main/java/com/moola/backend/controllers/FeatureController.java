@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/features")
 @CrossOrigin(origins = "*")
-// groups extra features that call outside services, like AI advice and currency conversion
+// groups extra features that call outside services, like ai advice and currency conversion
 public class FeatureController {
     private final AIService aiService;
     private final CurrencyService currencyService;
@@ -46,7 +46,7 @@ public class FeatureController {
 
         String dataSummary = transactions.stream()
                 .map(t -> {
-                    // clean the description before sending it to the AI service
+                    // clean the description before sending it to the ai service
                     String safeDesc = t.getDescription() != null ?
                             t.getDescription().replaceAll("[^a-zA-Z0-9 ]", "").substring(0, Math.min(t.getDescription().length(), 20))
                             : "No details";

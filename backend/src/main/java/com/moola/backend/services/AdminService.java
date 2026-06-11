@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
+// contains the admin user lookup, update, and delete logic
 public class AdminService {
 
     private final UserRepository userRepository;

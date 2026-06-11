@@ -65,7 +65,7 @@ public class TransactionServiceTest {
         testCategory.setId(categoryId);
         testCategory.setUser(testUser);
 
-        testWallet = new Wallet(); // Initialize target user wallet
+        testWallet = new Wallet(); // initialize target user wallet
         testWallet.setId(1L);
         testWallet.setBalance(new BigDecimal("1000.00"));
         testWallet.setCurrency("EUR");
@@ -94,7 +94,7 @@ public class TransactionServiceTest {
 
     @Test
     void create_WithValidCategory_ShouldSaveTransaction() {
-        // Mock dependencies introduced during wallet/currency service upgrades
+        // mock dependencies introduced during wallet/currency service upgrades
         when(categoryRepository.findByIdAndUserId(categoryId, userId)).thenReturn(Optional.of(testCategory));
         when(walletRepository.findByUserId(userId)).thenReturn(Optional.of(testWallet));
         when(currencyService.convertCurrency(any(), any(), any())).thenReturn(new BigDecimal("50.00"));
@@ -111,7 +111,7 @@ public class TransactionServiceTest {
         assertEquals(testUser, result.getUser());
         assertEquals(testCategory, result.getCategory());
         verify(transactionRepository, times(1)).save(newTx);
-        verify(walletRepository, times(1)).save(testWallet); // Verifies ledger calculations commit state shifts
+        verify(walletRepository, times(1)).save(testWallet); // verifies ledger calculations commit state shifts
     }
 
     @Test
@@ -153,7 +153,7 @@ public class TransactionServiceTest {
 
     @Test
     void create_WithIncomeType_ShouldIncreaseWalletBalance() {
-        // Arrange
+        // arrange
         BigDecimal startingBalance = new BigDecimal("1000.00");
         BigDecimal incomeAmount = new BigDecimal("500.00");
         testWallet.setBalance(startingBalance);
@@ -164,41 +164,41 @@ public class TransactionServiceTest {
 
         Transaction incomeTx = new Transaction();
         incomeTx.setAmount(incomeAmount);
-        incomeTx.setType("INCOME"); // Explicitly setting type to INCOME
+        incomeTx.setType("INCOME"); // explicitly setting type to income
         incomeTx.setCurrency("EUR");
 
-        // Act
+        // act
         transactionService.create(incomeTx, testUser);
 
-        // Assert
-        // Starting 1000.00 + Income 500.00 = 1500.00
+        // assert
+        // starting 100000 + income 50000 = 150000
         assertEquals(new BigDecimal("1500.00"), testWallet.getBalance());
         verify(walletRepository, times(1)).save(testWallet);
     }
 
     @Test
     void create_WithForeignCurrency_ShouldApplyExchangeRateBeforeDeducting() {
-        // Arrange
+        // arrange
         BigDecimal startingBalance = new BigDecimal("1000.00");
         BigDecimal usdAmount = new BigDecimal("100.00");
-        BigDecimal convertedEurAmount = new BigDecimal("90.00"); // Simulated FX Conversion Rate (100 USD = 90 EUR)
+        BigDecimal convertedEurAmount = new BigDecimal("90.00"); // simulated fx conversion rate (100 usd = 90 eur)
         testWallet.setBalance(startingBalance);
 
         when(walletRepository.findByUserId(userId)).thenReturn(Optional.of(testWallet));
-        // Mock CurrencyService to return the converted EUR amount when fed USD input parameters
+        // mock currencyservice to return the converted eur amount when fed usd input parameters
         when(currencyService.convertCurrency("USD", "EUR", usdAmount)).thenReturn(convertedEurAmount);
         when(transactionRepository.save(any(Transaction.class))).thenReturn(testTransaction);
 
         Transaction foreignTx = new Transaction();
         foreignTx.setAmount(usdAmount);
         foreignTx.setType("EXPENSE");
-        foreignTx.setCurrency("USD"); // Explicitly setting currency to USD
+        foreignTx.setCurrency("USD"); // explicitly setting currency to usd
 
-        // Act
+        // act
         transactionService.create(foreignTx, testUser);
 
-        // Assert
-        // Starting 1000.00 - Converted Expense 90.00 = 910.00
+        // assert
+        // starting 100000 - converted expense 9000 = 91000
         assertEquals(new BigDecimal("910.00"), testWallet.getBalance());
         verify(currencyService, times(1)).convertCurrency("USD", "EUR", usdAmount);
         verify(walletRepository, times(1)).save(testWallet);

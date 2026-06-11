@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-// adds the JWT "Authorize" button to Swagger so protected endpoints can be tested there
+// adds the jwt "authorize" button to swagger so protected endpoints can be tested there
 public class OpenApiConfig {
 
     @Bean
