@@ -38,12 +38,13 @@ Status: not verifiable in this repository.
 - Backend endpoints are ready for AJAX because they return JSON and CORS is configured in [SecurityConfig#corsConfigurationSource](backend/src/main/java/com/moola/backend/config/SecurityConfig.java).
 
 ### M5: Backend endpoints return data as JSON or XML
-Status: fulfilled as JSON.
+Status: fulfilled as JSON, with selected endpoints also supporting XML.
 
 - [AuthController#login](backend/src/main/java/com/moola/backend/controllers/AuthController.java): returns a `Map` with `accessToken` and user data, serialized as JSON.
 - [AuthController#updateProfile](backend/src/main/java/com/moola/backend/controllers/AuthController.java): returns updated user data including `advisorTone`.
 - [FeatureController#getAutomatedAdvice](backend/src/main/java/com/moola/backend/controllers/FeatureController.java): returns JSON with an `advice` value.
 - [FeatureController#convert](backend/src/main/java/com/moola/backend/controllers/FeatureController.java): returns JSON with converted currency data.
+- [FeatureController#getAutomatedAdvice](backend/src/main/java/com/moola/backend/controllers/FeatureController.java) and [FeatureController#convert](backend/src/main/java/com/moola/backend/controllers/FeatureController.java): can also return XML when the request sends `Accept: application/xml`.
 - [TransactionController#getAiAdvice](backend/src/main/java/com/moola/backend/controllers/TransactionController.java): also returns JSON with an `advice` value from transaction history.
 - [TransactionController#getAll](backend/src/main/java/com/moola/backend/controllers/TransactionController.java): returns a JSON array of transactions.
 - [CategoryController#getAllCategories](backend/src/main/java/com/moola/backend/controllers/CategoryController.java): returns a JSON array of categories.
@@ -133,10 +134,13 @@ Status: not fulfilled in this repository.
 - I do not see a third external REST service in the current repository.
 
 ### C2: Backend endpoints return data as JSON and XML
-Status: not fulfilled in this repository.
+Status: fulfilled for selected feature endpoints.
 
 - JSON is covered by controllers like [AuthController#login](backend/src/main/java/com/moola/backend/controllers/AuthController.java), [TransactionController#getAll](backend/src/main/java/com/moola/backend/controllers/TransactionController.java), and [FeatureController#convert](backend/src/main/java/com/moola/backend/controllers/FeatureController.java).
-- I did not find XML response configuration, `produces = ...xml`, or a Jackson XML dependency in [backend/pom.xml](backend/pom.xml).
+- XML support is enabled by the `jackson-dataformat-xml` dependency in [backend/pom.xml](backend/pom.xml).
+- [FeatureController#getAutomatedAdvice](backend/src/main/java/com/moola/backend/controllers/FeatureController.java): declares both `application/json` and `application/xml` with `produces`.
+- [FeatureController#convert](backend/src/main/java/com/moola/backend/controllers/FeatureController.java): declares both `application/json` and `application/xml` with `produces`.
+- Test it with `Accept: application/json` and `Accept: application/xml` on `/api/features/advice` or `/api/features/convert`.
 
 ### C3: Backend provides a PATCH endpoint consumed by FE
 Status: backend side is fulfilled, frontend consumption is not verifiable here.
