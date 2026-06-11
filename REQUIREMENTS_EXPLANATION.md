@@ -10,6 +10,7 @@ Status: fulfilled in this repository.
 - [backend/pom.xml](backend/pom.xml): shows the backend is its own Maven/Spring Boot project.
 - [Application#main](backend/src/main/java/com/moola/backend/Application.java): starts the Spring Boot backend.
 - [TransactionController](backend/src/main/java/com/moola/backend/controllers/TransactionController.java), [CategoryController](backend/src/main/java/com/moola/backend/controllers/CategoryController.java), [AuthController](backend/src/main/java/com/moola/backend/controllers/AuthController.java), [FeatureController](backend/src/main/java/com/moola/backend/controllers/FeatureController.java), [WalletController](backend/src/main/java/com/moola/backend/controllers/WalletController.java), and [AdminController](backend/src/main/java/com/moola/backend/controllers/AdminController.java): show the backend HTTP layer.
+- [TransactionService](backend/src/main/java/com/moola/backend/services/TransactionService.java), [CategoryService](backend/src/main/java/com/moola/backend/services/CategoryService.java), [AuthService](backend/src/main/java/com/moola/backend/services/AuthService.java), [CurrencyService](backend/src/main/java/com/moola/backend/services/CurrencyService.java), and [AIService](backend/src/main/java/com/moola/backend/services/AIService.java): show the backend business logic layer.
 
 ### M2: Frontend is an individual component implemented using HTML5, CSS and JS
 Status: not verifiable in this repository.
@@ -27,6 +28,7 @@ Status: backend side is fulfilled, frontend side is not verifiable here.
 - [AuthController](backend/src/main/java/com/moola/backend/controllers/AuthController.java): exposes `/api/auth`.
 - [FeatureController](backend/src/main/java/com/moola/backend/controllers/FeatureController.java): exposes `/api/features`.
 - [WalletController](backend/src/main/java/com/moola/backend/controllers/WalletController.java): exposes `/api/wallet`.
+- [AdminController](backend/src/main/java/com/moola/backend/controllers/AdminController.java): exposes `/api/admin`.
 
 ### M4: FE and BE communicate using asynchronous data transfer (AJAX)
 Status: not verifiable in this repository.
@@ -39,8 +41,10 @@ Status: not verifiable in this repository.
 Status: fulfilled as JSON.
 
 - [AuthController#login](backend/src/main/java/com/moola/backend/controllers/AuthController.java): returns a `Map` with `accessToken` and user data, serialized as JSON.
+- [AuthController#updateProfile](backend/src/main/java/com/moola/backend/controllers/AuthController.java): returns updated user data including `advisorTone`.
 - [FeatureController#getAutomatedAdvice](backend/src/main/java/com/moola/backend/controllers/FeatureController.java): returns JSON with an `advice` value.
 - [FeatureController#convert](backend/src/main/java/com/moola/backend/controllers/FeatureController.java): returns JSON with converted currency data.
+- [TransactionController#getAiAdvice](backend/src/main/java/com/moola/backend/controllers/TransactionController.java): also returns JSON with an `advice` value from transaction history.
 - [TransactionController#getAll](backend/src/main/java/com/moola/backend/controllers/TransactionController.java): returns a JSON array of transactions.
 - [CategoryController#getAllCategories](backend/src/main/java/com/moola/backend/controllers/CategoryController.java): returns a JSON array of categories.
 - [WalletController#getWallet](backend/src/main/java/com/moola/backend/controllers/WalletController.java): returns wallet data as JSON.
@@ -49,20 +53,21 @@ Status: fulfilled as JSON.
 Status: fulfilled.
 
 - GET: [TransactionController#getAll](backend/src/main/java/com/moola/backend/controllers/TransactionController.java) handles `GET /api/transactions`.
+- GET: [TransactionController#getAiAdvice](backend/src/main/java/com/moola/backend/controllers/TransactionController.java) handles `GET /api/transactions/advice`.
 - POST: [TransactionController#create](backend/src/main/java/com/moola/backend/controllers/TransactionController.java) handles `POST /api/transactions`.
 - PUT: [TransactionController#update](backend/src/main/java/com/moola/backend/controllers/TransactionController.java) handles `PUT /api/transactions/{id}`.
 - DELETE: [TransactionController#delete](backend/src/main/java/com/moola/backend/controllers/TransactionController.java) handles `DELETE /api/transactions/{id}`.
-- Another full CRUD example is [CategoryController](backend/src/main/java/com/moola/backend/controllers/CategoryController.java), with GET at line 32, POST at line 37, PUT at line 42, DELETE at line 47, and PATCH at line 52.
+- Another full CRUD example is [CategoryController](backend/src/main/java/com/moola/backend/controllers/CategoryController.java), which supports GET, POST, PUT, DELETE, and PATCH for `/api/categories`.
 
 ### M7: Frontend consumes resources using GET, POST, PUT, and DELETE
 Status: not verifiable in this repository.
 
 - No frontend source files are present here.
 - In the frontend, look for AJAX calls to:
-- `GET /api/transactions` or `GET /api/categories`
-- `POST /api/transactions` or `POST /api/categories`
-- `PUT /api/transactions/{id}` or `PUT /api/categories/{id}`
-- `DELETE /api/transactions/{id}` or `DELETE /api/categories/{id}`
+  - `GET /api/transactions` or `GET /api/categories`
+  - `POST /api/transactions` or `POST /api/categories`
+  - `PUT /api/transactions/{id}` or `PUT /api/categories/{id}`
+  - `DELETE /api/transactions/{id}` or `DELETE /api/categories/{id}`
 
 ### M8: System consumes at least one external REST web service
 Status: fulfilled.
@@ -75,6 +80,7 @@ Status: fulfilled.
 Status: fulfilled with JWT.
 
 - [AuthController#login](backend/src/main/java/com/moola/backend/controllers/AuthController.java): returns the JWT token to the client.
+- [AuthController#updateProfile](backend/src/main/java/com/moola/backend/controllers/AuthController.java): updates user profile data while protected by JWT security.
 - [AuthService#login](backend/src/main/java/com/moola/backend/services/AuthService.java): checks the username and password.
 - [AuthService token creation](backend/src/main/java/com/moola/backend/services/AuthService.java): calls `jwtUtils.generateToken(...)`.
 - [JwtUtils#generateToken](backend/src/main/java/com/moola/backend/security/JwtUtils.java): creates the JWT.
@@ -92,6 +98,7 @@ Status: fulfilled.
 - [AIService#getFinancialAdvice](backend/src/main/java/com/moola/backend/services/AIService.java): uses the Groq API.
 - [AIService RestTemplate call](backend/src/main/java/com/moola/backend/services/AIService.java): calls Groq with `restTemplate.postForEntity(...)`.
 - [FeatureController#getAutomatedAdvice](backend/src/main/java/com/moola/backend/controllers/FeatureController.java): exposes AI advice through `/api/features/advice`.
+- [TransactionController#getAiAdvice](backend/src/main/java/com/moola/backend/controllers/TransactionController.java): exposes AI advice through `/api/transactions/advice` and passes the user's `advisorTone`.
 - [FeatureController#convert](backend/src/main/java/com/moola/backend/controllers/FeatureController.java): exposes currency conversion through `/api/features/convert`.
 
 ### S2: System offers a second individual FE component
@@ -99,9 +106,9 @@ Status: not verifiable in this repository.
 
 - No first or second frontend component is present here.
 - A second frontend component could prove itself by calling at least three backend endpoints, for example:
-- [TransactionController#getAll](backend/src/main/java/com/moola/backend/controllers/TransactionController.java) for `GET /api/transactions`.
-- [WalletController#getWallet](backend/src/main/java/com/moola/backend/controllers/WalletController.java) for `GET /api/wallet`.
-- [FeatureController#getAutomatedAdvice](backend/src/main/java/com/moola/backend/controllers/FeatureController.java) for `GET /api/features/advice`.
+  - [TransactionController#getAll](backend/src/main/java/com/moola/backend/controllers/TransactionController.java) for `GET /api/transactions`.
+  - [WalletController#getWallet](backend/src/main/java/com/moola/backend/controllers/WalletController.java) for `GET /api/wallet`.
+  - [TransactionController#getAiAdvice](backend/src/main/java/com/moola/backend/controllers/TransactionController.java) for `GET /api/transactions/advice`.
 
 ### S3: FE is W3C compliant
 Status: not verifiable in this repository.
@@ -144,7 +151,7 @@ Status: backend side is fulfilled, frontend consumption is not verifiable here.
 
 1. Start at [Application#main](backend/src/main/java/com/moola/backend/Application.java).
 2. Show [SecurityConfig#securityFilterChain](backend/src/main/java/com/moola/backend/config/SecurityConfig.java) and [JwtRequestFilter](backend/src/main/java/com/moola/backend/security/JwtRequestFilter.java) for login/session protection.
-3. Show [AuthController#login](backend/src/main/java/com/moola/backend/controllers/AuthController.java) and [JwtUtils#generateToken](backend/src/main/java/com/moola/backend/security/JwtUtils.java).
-4. Show [TransactionController](backend/src/main/java/com/moola/backend/controllers/TransactionController.java) for GET, POST, PUT, DELETE, and PATCH.
+3. Show [AuthController#login](backend/src/main/java/com/moola/backend/controllers/AuthController.java), [AuthController#updateProfile](backend/src/main/java/com/moola/backend/controllers/AuthController.java), and [JwtUtils#generateToken](backend/src/main/java/com/moola/backend/security/JwtUtils.java).
+4. Show [TransactionController](backend/src/main/java/com/moola/backend/controllers/TransactionController.java) for GET, POST, PUT, DELETE, PATCH, and transaction AI advice.
 5. Show [TransactionService](backend/src/main/java/com/moola/backend/services/TransactionService.java) for wallet and category business logic.
-6. Show [CurrencyService#convertCurrency](backend/src/main/java/com/moola/backend/services/CurrencyService.java) and [AIService#getFinancialAdvice](backend/src/main/java/com/moola/backend/services/AIService.java) for external REST services.
+6. Show [CurrencyService#convertCurrency](backend/src/main/java/com/moola/backend/services/CurrencyService.java) and [AIService#getFinancialAdvice](backend/src/main/java/com/moola/backend/services/AIService.java) for external REST services and advisor tone support.

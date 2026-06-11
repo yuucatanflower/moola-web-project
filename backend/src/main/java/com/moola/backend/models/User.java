@@ -15,7 +15,7 @@ import java.util.UUID;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-// Database object for an app user login and wallet data
+// database object for an app user login and wallet data
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -34,7 +34,7 @@ public class User {
     @Column(nullable = false)
     private BigDecimal hourlyWage = BigDecimal.valueOf(15.0);
 
-    // Database column to remember the AI personality tone
+    // database column to remember the ai personality tone
     @Column(nullable = false)
     private String advisorTone = "roast";
 
