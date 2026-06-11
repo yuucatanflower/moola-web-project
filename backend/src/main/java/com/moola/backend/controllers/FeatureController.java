@@ -5,12 +5,12 @@ import com.moola.backend.repositories.UserRepository;
 import com.moola.backend.services.AIService;
 import com.moola.backend.services.CurrencyService;
 import com.moola.backend.services.TransactionService;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.security.Principal;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
@@ -32,8 +32,8 @@ public class FeatureController {
         this.userRepository = userRepository;
     }
 
-    @GetMapping("/advice")
-    public ResponseEntity<Map<String, String>> getAutomatedAdvice(@RequestParam(defaultValue = "30") int days, Principal principal) {
+    @GetMapping(value = "/advice", produces = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE})
+    public ResponseEntity<AdviceResponse> getAutomatedAdvice(@RequestParam(defaultValue = "30") int days, Principal principal) {
         // fetch the corresponding persistent user context from the database mapping layer
         User user = userRepository.findByUsername(principal.getName())
                 .orElseThrow(() -> new RuntimeException("Authenticated user metadata context not found"));
@@ -51,22 +51,43 @@ public class FeatureController {
         // pass the selected user tone into the ai service
         String advice = aiService.getFinancialAdvice(dataSummary, user.getAdvisorTone());
 
-        return ResponseEntity.ok(Map.of("advice", advice));
+        return ResponseEntity.ok(new AdviceResponse(advice));
     }
 
-    @GetMapping("/convert")
-    public ResponseEntity<Map<String, Object>> convert(
+    @GetMapping(value = "/convert", produces = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE})
+    public ResponseEntity<ConversionResponse> convert(
             @RequestParam String from,
             @RequestParam String to,
             @RequestParam BigDecimal amount) {
 
         BigDecimal convertedAmount = currencyService.convertCurrency(from, to, amount);
 
-        return ResponseEntity.ok(Map.of(
-                "from", from,
-                "to", to,
-                "originalAmount", amount,
-                "convertedAmount", convertedAmount
-        ));
+        return ResponseEntity.ok(new ConversionResponse(from, to, amount, convertedAmount));
+    }
+
+    public static class AdviceResponse {
+        public String advice;
+
+        public AdviceResponse() {}
+
+        public AdviceResponse(String advice) {
+            this.advice = advice;
+        }
+    }
+
+    public static class ConversionResponse {
+        public String from;
+        public String to;
+        public BigDecimal originalAmount;
+        public BigDecimal convertedAmount;
+
+        public ConversionResponse() {}
+
+        public ConversionResponse(String from, String to, BigDecimal originalAmount, BigDecimal convertedAmount) {
+            this.from = from;
+            this.to = to;
+            this.originalAmount = originalAmount;
+            this.convertedAmount = convertedAmount;
+        }
     }
 }
