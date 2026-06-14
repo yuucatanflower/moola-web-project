@@ -201,7 +201,6 @@ Status: not fulfilled in this repository.
 - Current external REST service 1: [CurrencyService#convertCurrency](backend/src/main/java/com/moola/backend/services/CurrencyService.java) for Frankfurter.
 - Current external REST service 2: [AIService#getFinancialAdvice](backend/src/main/java/com/moola/backend/services/AIService.java) for Groq.
 - Frontend-only external request: [TransactionList.jsx BrandIcon](frontend/src/components/dashboard/TransactionList.jsx) loads favicons from `https://www.google.com/s2/favicons`, but this is a direct browser image request, not a backend-managed REST integration.
-- I do not see a third backend-managed external REST service in the current repository.
 
 ### C2: Backend endpoints return data as JSON and XML
 Status: fulfilled for selected feature endpoints.
