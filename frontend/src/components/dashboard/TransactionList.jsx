@@ -71,7 +71,7 @@ const formatTransactionDate = (date) => {
   return parsed.toLocaleDateString("de-DE");
 };
 
-function CategoryLegend({ categories }) {
+function CategoryLegend({ categories, currency = "EUR" }) {
   return (
     <div className="grid gap-3">
       {categories.length ? (
@@ -81,7 +81,7 @@ function CategoryLegend({ categories }) {
             <div>
               <p className="m-0 text-sm font-extrabold text-white">{category.label}</p>
               <p className="m-0 text-sm font-bold text-[#daffde]/75">
-                {formatAmount(category.amount)}
+                {formatAmount(category.amount, currency)}
               </p>
             </div>
           </div>
@@ -117,7 +117,7 @@ function SpendingPie({ categories }) {
   );
 }
 
-function TransactionTable({ onDeleteTransaction, onUpdateTransaction, transactions }) {
+function TransactionTable({ onDeleteTransaction, onUpdateTransaction, transactions, currency = "EUR" }) {
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({ amount: "", description: "" });
   const [pendingId, setPendingId] = useState(null);
@@ -189,7 +189,7 @@ function TransactionTable({ onDeleteTransaction, onUpdateTransaction, transactio
         <span>Date</span>
         <span>Type</span>
         <span>Category</span>
-        <span>Amount, EUR</span>
+        <span>Amount, {currency}</span>
         <span>Description</span>
         <span className="text-right">Actions</span>
       </div>
@@ -307,6 +307,7 @@ function TransactionList({
   onUpdateTransaction,
   transactions,
   transactionsState,
+  currency = "EUR"
 }) {
   const categories = buildCategoryBreakdown(transactions);
 
@@ -314,7 +315,7 @@ function TransactionList({
     <section className="grid min-h-[370px] min-w-0 gap-6 rounded-[28px] bg-[#111]/95 p-5 shadow-[0_20px_60px_rgba(0,0,0,0.42)] md:grid-cols-[190px_minmax(0,1fr)] xl:grid-cols-[210px_minmax(0,1fr)]">
       <aside className="grid content-start justify-items-center gap-6 pt-2 md:justify-items-start">
         <SpendingPie categories={categories} />
-        <CategoryLegend categories={categories} />
+        <CategoryLegend categories={categories} currency={currency} />
       </aside>
 
       {transactionsState.loading ? (
@@ -326,6 +327,7 @@ function TransactionList({
           onDeleteTransaction={onDeleteTransaction}
           onUpdateTransaction={onUpdateTransaction}
           transactions={transactions}
+          currency={currency}
         />
       )}
     </section>

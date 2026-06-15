@@ -113,10 +113,18 @@ function App() {
           username: credentials.username,
         });
 
-        if (loginResponse.user && loginResponse.user.advisorTone) {
-          nextSession.advisorTone = loginResponse.user.advisorTone;
+        // Ensures both Tone and Currency survive the login refresh
+        if (loginResponse.user) {
           if (!nextSession.user) nextSession.user = {};
-          nextSession.user.advisorTone = loginResponse.user.advisorTone;
+
+          if (loginResponse.user.advisorTone) {
+            nextSession.advisorTone = loginResponse.user.advisorTone;
+            nextSession.user.advisorTone = loginResponse.user.advisorTone;
+          }
+          if (loginResponse.user.preferredCurrency) {
+            nextSession.preferredCurrency = loginResponse.user.preferredCurrency;
+            nextSession.user.preferredCurrency = loginResponse.user.preferredCurrency;
+          }
         }
 
         saveSession(nextSession);
@@ -150,7 +158,6 @@ function App() {
 // Profile patch handler to update stateful session details locally
 const handleUpdateProfile = async (updatedData) => {
     try {
-      // 1. Send the updated tone to your backend API using safe fallbacks
       await updateUserProfile(session.accessToken, {
         currentUsername: session.username || session.user?.username,
         newUsername: updatedData.username,
@@ -159,7 +166,6 @@ const handleUpdateProfile = async (updatedData) => {
         preferredCurrency: updatedData.preferredCurrency
       });
 
-      // 2. Update the local state instantly across all potential object paths so it stays highlighted
       setSession((currentSession) => {
         if (!currentSession) return currentSession;
 
@@ -168,11 +174,13 @@ const handleUpdateProfile = async (updatedData) => {
           username: updatedData.username ?? currentSession.username,
           hourlyWage: updatedData.hourlyWage ?? currentSession.hourlyWage,
           advisorTone: updatedData.advisorTone ?? currentSession.advisorTone,
+          preferredCurrency: updatedData.preferredCurrency ?? currentSession.preferredCurrency, // Fixed!
           user: {
             ...currentSession.user,
             username: updatedData.username ?? currentSession.user?.username,
             hourlyWage: updatedData.hourlyWage ?? currentSession.user?.hourlyWage,
             advisorTone: updatedData.advisorTone ?? currentSession.user?.advisorTone,
+            preferredCurrency: updatedData.preferredCurrency ?? currentSession.user?.preferredCurrency, // Fixed!
           },
         };
 

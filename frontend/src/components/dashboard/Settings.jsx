@@ -7,6 +7,9 @@ function Settings({ session, onUpdateProfile, onLogout }) {
   const initialHourlyWage = session?.user?.hourlyWage || session?.hourlyWage || "15";
   const initialTone = session?.user?.advisorTone || session?.advisorTone || "roast";
 
+  // Extract initial currency
+  const initialCurrency = session?.user?.preferredCurrency || session?.preferredCurrency || "EUR";
+
   // Account profile state
   const [username, setUsername] = useState(initialUsername);
   const [hourlyWage, setHourlyWage] = useState(initialHourlyWage);
@@ -15,7 +18,7 @@ function Settings({ session, onUpdateProfile, onLogout }) {
   const [salaryShield, setSalaryShield] = useState(false);
   const [cooldownTimer, setCooldownTimer] = useState("24");
   const [advisorTone, setAdvisorTone] = useState(initialTone);
-  const [preferredCurrency, setPreferredCurrency] = useState("EUR");
+  const [preferredCurrency, setPreferredCurrency] = useState(initialCurrency);
 
   // Synchronize component state values smoothly when routing or mutating parent context
   useEffect(() => {
@@ -23,7 +26,7 @@ function Settings({ session, onUpdateProfile, onLogout }) {
       setUsername(session?.username || session?.user?.username || "");
       setHourlyWage(session?.user?.hourlyWage || session?.hourlyWage || "15");
       setAdvisorTone(session?.user?.advisorTone || session?.advisorTone || "roast");
-      console.log("Settings panel layout states re-synchronized with active application session mapping.");
+      setPreferredCurrency(session?.user?.preferredCurrency || session?.preferredCurrency || "EUR");
     }
   }, [session]);
 
