@@ -174,13 +174,13 @@ const handleUpdateProfile = async (updatedData) => {
           username: updatedData.username ?? currentSession.username,
           hourlyWage: updatedData.hourlyWage ?? currentSession.hourlyWage,
           advisorTone: updatedData.advisorTone ?? currentSession.advisorTone,
-          preferredCurrency: updatedData.preferredCurrency ?? currentSession.preferredCurrency, // Fixed!
+          preferredCurrency: updatedData.preferredCurrency ?? currentSession.preferredCurrency,
           user: {
             ...currentSession.user,
             username: updatedData.username ?? currentSession.user?.username,
             hourlyWage: updatedData.hourlyWage ?? currentSession.user?.hourlyWage,
             advisorTone: updatedData.advisorTone ?? currentSession.user?.advisorTone,
-            preferredCurrency: updatedData.preferredCurrency ?? currentSession.user?.preferredCurrency, // Fixed!
+            preferredCurrency: updatedData.preferredCurrency ?? currentSession.user?.preferredCurrency,
           },
         };
 
@@ -190,9 +190,10 @@ const handleUpdateProfile = async (updatedData) => {
         return nextSession;
       });
 
-      alert("Successfully saved preferences!");
+      // Log success
+      console.log("Successfully saved preferences!");
     } catch (error) {
-      alert("Error with Saving: " + error.message);
+      console.error("Error with Saving: ", error.message);
     }
   };
 
