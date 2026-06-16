@@ -135,7 +135,7 @@ export const deleteUser = async (adminPassword, userId) =>
 
 export const updateUser = async (adminPassword, userId, username) =>
     request(`/admin/users/${userId}`, {
-        method: "PUT",
+        method: "PATCH",
         headers: {
             "X-ADMIN-PASSWORD": adminPassword,
             "Content-Type": "application/json",

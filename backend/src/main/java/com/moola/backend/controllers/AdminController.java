@@ -32,7 +32,7 @@ public class AdminController {
         return adminService.getAllUsers();
     }
 
-    @PutMapping("/users/{id}")
+    @PatchMapping("/users/{id}")
     public User updateUser(
             @PathVariable UUID id,
             @RequestBody Map<String, String> body,
