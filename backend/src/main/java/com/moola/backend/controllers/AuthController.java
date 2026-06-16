@@ -1,13 +1,18 @@
 package com.moola.backend.controllers;
 
+import com.moola.backend.models.Transaction;
 import com.moola.backend.models.User;
+import com.moola.backend.repositories.TransactionRepository;
 import com.moola.backend.repositories.UserRepository;
 import com.moola.backend.services.AuthService;
+import com.moola.backend.services.CurrencyService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -18,10 +23,14 @@ public class AuthController {
 
     private final AuthService authService;
     private final UserRepository userRepository;
+    private final CurrencyService currencyService;
+    private final TransactionRepository transactionRepository;
 
-    public AuthController(AuthService authService, UserRepository userRepository) {
+    public AuthController(AuthService authService, UserRepository userRepository, CurrencyService currencyService, TransactionRepository transactionRepository) {
         this.authService = authService;
         this.userRepository = userRepository;
+        this.currencyService = currencyService;
+        this.transactionRepository = transactionRepository;
     }
 
     @PostMapping("/register")
@@ -107,19 +116,45 @@ public class AuthController {
             }
         }
 
-        // apply preferred currency update
-        if (body.containsKey("preferredCurrency")) {
-            String newCurrency = (String) body.get("preferredCurrency");
-            if (newCurrency != null) {
-                user.setPreferredCurrency(newCurrency.trim());
-            }
-        }
-
         // apply salary shield update
         if (body.containsKey("salaryShield")) {
             Object shieldObj = body.get("salaryShield");
             if (shieldObj != null) {
                 user.setSalaryShield(Boolean.parseBoolean(shieldObj.toString()));
+            }
+        }
+
+        // apply preferred currency update AND convert all monetary values
+        if (body.containsKey("preferredCurrency")) {
+            String newCurrency = (String) body.get("preferredCurrency");
+            if (newCurrency != null && !newCurrency.trim().equalsIgnoreCase(user.getPreferredCurrency())) {
+                String oldCurrency = user.getPreferredCurrency();
+                String targetCurrency = newCurrency.trim().toUpperCase();
+
+                // 1. Fetch the rate exactly ONCE to avoid API rate limits
+                BigDecimal exchangeRate = currencyService.getExchangeRate(oldCurrency, targetCurrency);
+
+                if (exchangeRate.compareTo(BigDecimal.ONE) != 0) {
+                    // 2. Convert hourly wage
+                    user.setHourlyWage(user.getHourlyWage().multiply(exchangeRate).setScale(2, RoundingMode.HALF_UP));
+
+                    // 3. Convert wallet balance
+                    if (user.getWallet() != null) {
+                        user.getWallet().setBalance(user.getWallet().getBalance().multiply(exchangeRate).setScale(2, RoundingMode.HALF_UP));
+                        user.getWallet().setCurrency(targetCurrency);
+                    }
+
+                    // 4. Convert all historical transactions belonging to this user
+                    List<Transaction> userTransactions = transactionRepository.findAllByUserId(user.getId());
+                    for (Transaction t : userTransactions) {
+                        t.setAmount(t.getAmount().multiply(exchangeRate).setScale(2, RoundingMode.HALF_UP));
+                        t.setCurrency(targetCurrency);
+                    }
+                    transactionRepository.saveAll(userTransactions);
+                }
+
+                // Update user preference
+                user.setPreferredCurrency(targetCurrency);
             }
         }
 

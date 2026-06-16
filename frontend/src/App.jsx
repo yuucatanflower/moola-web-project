@@ -158,7 +158,12 @@ function App() {
 // Profile patch handler to update stateful session details locally
 const handleUpdateProfile = async (updatedData) => {
     try {
-      await updateUserProfile(session.accessToken, {
+      // 1. Check if the currency is actually being changed
+      const oldCurrency = session.preferredCurrency || session.user?.preferredCurrency;
+      const isCurrencyChanged = updatedData.preferredCurrency && updatedData.preferredCurrency !== oldCurrency;
+
+      // 2. Send the update to the backend AND save the response (which contains the newly calculated wage and balance)
+      const updatedUserResponse = await updateUserProfile(session.accessToken, {
         currentUsername: session.username || session.user?.username,
         newUsername: updatedData.username,
         hourlyWage: updatedData.hourlyWage,
@@ -167,23 +172,31 @@ const handleUpdateProfile = async (updatedData) => {
         salaryShield: updatedData.salaryShield
       });
 
+      // 3. IF the currency changed, force React to download the newly converted transactions
+      if (isCurrencyChanged) {
+        const freshTransactions = await fetchTransactions(session.accessToken);
+        setTransactions(Array.isArray(freshTransactions) ? freshTransactions : []);
+      }
+
+      // 4. Update the local state with the precise math returned from the backend
       setSession((currentSession) => {
         if (!currentSession) return currentSession;
 
         const nextSession = {
           ...currentSession,
-          username: updatedData.username ?? currentSession.username,
-          hourlyWage: updatedData.hourlyWage ?? currentSession.hourlyWage,
-          advisorTone: updatedData.advisorTone ?? currentSession.advisorTone,
-          preferredCurrency: updatedData.preferredCurrency ?? currentSession.preferredCurrency,
-          salaryShield: updatedData.salaryShield ?? currentSession.salaryShield,
+          username: updatedUserResponse.username ?? updatedData.username,
+          hourlyWage: updatedUserResponse.hourlyWage ?? updatedData.hourlyWage,
+          advisorTone: updatedUserResponse.advisorTone ?? updatedData.advisorTone,
+          preferredCurrency: updatedUserResponse.preferredCurrency ?? updatedData.preferredCurrency,
+          salaryShield: updatedUserResponse.salaryShield ?? updatedData.salaryShield,
           user: {
             ...currentSession.user,
-            username: updatedData.username ?? currentSession.user?.username,
-            hourlyWage: updatedData.hourlyWage ?? currentSession.user?.hourlyWage,
-            advisorTone: updatedData.advisorTone ?? currentSession.user?.advisorTone,
-            preferredCurrency: updatedData.preferredCurrency ?? currentSession.user?.preferredCurrency,
-            salaryShield: updatedData.salaryShield ?? currentSession.user?.salaryShield,
+            username: updatedUserResponse.username ?? updatedData.username,
+            hourlyWage: updatedUserResponse.hourlyWage ?? updatedData.hourlyWage,
+            advisorTone: updatedUserResponse.advisorTone ?? updatedData.advisorTone,
+            preferredCurrency: updatedUserResponse.preferredCurrency ?? updatedData.preferredCurrency,
+            salaryShield: updatedUserResponse.salaryShield ?? updatedData.salaryShield,
+            currentBalance: updatedUserResponse.balance ?? currentSession.user?.currentBalance
           },
         };
 
@@ -193,7 +206,7 @@ const handleUpdateProfile = async (updatedData) => {
         return nextSession;
       });
 
-      console.log("Successfully saved preferences!");
+      console.log("Successfully saved preferences and synced new currency math!");
     } catch (error) {
       console.error("Error with Saving: ", error.message);
     }

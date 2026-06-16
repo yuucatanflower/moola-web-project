@@ -60,7 +60,8 @@ public class FeatureController {
             @RequestParam String to,
             @RequestParam BigDecimal amount) {
 
-        BigDecimal convertedAmount = currencyService.convertCurrency(from, to, amount);
+        BigDecimal rate = currencyService.getExchangeRate(from, to);
+        BigDecimal convertedAmount = amount.multiply(rate).setScale(2, java.math.RoundingMode.HALF_UP);
 
         return ResponseEntity.ok(new ConversionResponse(from, to, amount, convertedAmount));
     }

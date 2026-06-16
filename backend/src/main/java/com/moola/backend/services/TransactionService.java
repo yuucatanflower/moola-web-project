@@ -13,12 +13,13 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 @Service
-// handles transaction rules and updates wallet balances
+// Handles transaction rules and updates wallet balances
 public class TransactionService {
     private final TransactionRepository repository;
     private final CategoryRepository categoryRepository;
@@ -43,17 +44,17 @@ public class TransactionService {
     public Transaction create(Transaction transaction, User user) {
         transaction.setUser(user);
 
-        // find or create the category for a new transaction
+        // Find or create the category for a new transaction
         if (transaction.getCategory() != null) {
             Category incomingCategory = transaction.getCategory();
 
             if (incomingCategory.getId() != null) {
-                // if an id is provided, look it up normally
+                // If an id is provided, look it up normally
                 Category fullCategory = categoryRepository.findByIdAndUserId(incomingCategory.getId(), user.getId())
                         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Category not found"));
                 transaction.setCategory(fullCategory);
             } else if (incomingCategory.getName() != null && !incomingCategory.getName().trim().isEmpty()) {
-                // if only a name string is provided, find it or create it
+                // If only a name string is provided, find it or create it
                 String cleanName = incomingCategory.getName().trim();
                 Category resolvedCategory = categoryRepository.findByUserAndName(user, cleanName)
                         .orElseGet(() -> {
@@ -68,11 +69,10 @@ public class TransactionService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Wallet ledger missing for user context"));
 
         String sourceCurrency = (transaction.getCurrency() != null) ? transaction.getCurrency() : wallet.getCurrency();
-        BigDecimal walletNormalizedAmount = currencyService.convertCurrency(
-                sourceCurrency,
-                wallet.getCurrency(),
-                transaction.getAmount()
-        );
+
+        // Get the exchange rate and calculate the normalized amount
+        BigDecimal rate = currencyService.getExchangeRate(sourceCurrency, wallet.getCurrency());
+        BigDecimal walletNormalizedAmount = transaction.getAmount().multiply(rate).setScale(2, RoundingMode.HALF_UP);
 
         if (transaction.getType() != null && transaction.getType().equalsIgnoreCase("INCOME")) {
             wallet.setBalance(wallet.getBalance().add(walletNormalizedAmount));
@@ -92,11 +92,10 @@ public class TransactionService {
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Wallet ledger missing for user context"));
 
             String existingCurrency = (existing.getCurrency() != null) ? existing.getCurrency() : wallet.getCurrency();
-            BigDecimal existingNormalizedRefund = currencyService.convertCurrency(
-                    existingCurrency,
-                    wallet.getCurrency(),
-                    existing.getAmount()
-            );
+
+            // Revert old transaction amount
+            BigDecimal existingRate = currencyService.getExchangeRate(existingCurrency, wallet.getCurrency());
+            BigDecimal existingNormalizedRefund = existing.getAmount().multiply(existingRate).setScale(2, RoundingMode.HALF_UP);
 
             BigDecimal balanceBeforeOldTransaction;
             if (existing.getType() != null && existing.getType().equalsIgnoreCase("INCOME")) {
@@ -106,11 +105,10 @@ public class TransactionService {
             }
 
             String updatedCurrency = (updatedTransaction.getCurrency() != null) ? updatedTransaction.getCurrency() : wallet.getCurrency();
-            BigDecimal newlyNormalizedDeduction = currencyService.convertCurrency(
-                    updatedCurrency,
-                    wallet.getCurrency(),
-                    updatedTransaction.getAmount()
-            );
+
+            // Apply new transaction amount
+            BigDecimal updatedRate = currencyService.getExchangeRate(updatedCurrency, wallet.getCurrency());
+            BigDecimal newlyNormalizedDeduction = updatedTransaction.getAmount().multiply(updatedRate).setScale(2, RoundingMode.HALF_UP);
 
             if (updatedTransaction.getType() != null && updatedTransaction.getType().equalsIgnoreCase("INCOME")) {
                 wallet.setBalance(balanceBeforeOldTransaction.add(newlyNormalizedDeduction));
@@ -128,7 +126,7 @@ public class TransactionService {
             existing.setImpulseBuy(updatedTransaction.isImpulseBuy());
             existing.setRegret(updatedTransaction.isRegret());
 
-            // find or create the category for an updated transaction
+            // Find or create the category for an updated transaction
             if (updatedTransaction.getCategory() != null) {
                 Category incomingCategory = updatedTransaction.getCategory();
                 if (incomingCategory.getId() != null) {
@@ -171,11 +169,10 @@ public class TransactionService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Wallet ledger missing for user context"));
 
         String existingCurrency = (existing.getCurrency() != null) ? existing.getCurrency() : wallet.getCurrency();
-        BigDecimal refundAmount = currencyService.convertCurrency(
-                existingCurrency,
-                wallet.getCurrency(),
-                existing.getAmount()
-        );
+
+        // Refund deleted amount
+        BigDecimal existingRate = currencyService.getExchangeRate(existingCurrency, wallet.getCurrency());
+        BigDecimal refundAmount = existing.getAmount().multiply(existingRate).setScale(2, RoundingMode.HALF_UP);
 
         if (existing.getType() != null && existing.getType().equalsIgnoreCase("INCOME")) {
             wallet.setBalance(wallet.getBalance().subtract(refundAmount));
