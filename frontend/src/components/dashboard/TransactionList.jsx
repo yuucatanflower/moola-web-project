@@ -1,25 +1,21 @@
 import { useState } from "react";
 import { formatAmount } from "../../utils/formatters";
 
-// Automatically fetches brand logos using Google's reliable favicon service
 function BrandIcon({ name }) {
   const [hasError, setHasError] = useState(false);
 
-  // Blacklist of generic terms that shouldn't attempt to load a brand logo
   const genericTerms = ["salary", "income", "wage", "deposit", "transfer", "cash"];
   const cleanName = name ? name.toLowerCase() : "";
   const isGeneric = genericTerms.some(term => cleanName.includes(term));
 
-  // Fallback to text circle if no name, image error, or generic financial term
   if (!name || hasError || isGeneric) {
     return (
-      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[#2b2b2b] bg-[#1a1a1a] text-[10px] font-bold text-white shadow-sm">
+      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-gray-100 text-[10px] font-bold text-black shadow-sm transition-colors dark:border-[#2b2b2b] dark:bg-[#1a1a1a] dark:text-white">
         {name ? name.charAt(0).toUpperCase() : "?"}
       </div>
     );
   }
 
-  // Isolate the brand keyword (e.g., "Netflix" or "Spotify")
   const firstWord = name.split(" ")[0].toLowerCase().replace(/[^a-z0-9]/g, "");
   const logoUrl = `https://www.google.com/s2/favicons?sz=128&domain=${firstWord}.com`;
 
@@ -28,7 +24,7 @@ function BrandIcon({ name }) {
       src={logoUrl}
       alt=""
       onError={() => setHasError(true)}
-      className="h-7 w-7 shrink-0 rounded-full border border-[#2b2b2b] bg-white object-contain p-1 shadow-sm"
+      className="h-7 w-7 shrink-0 rounded-full border border-gray-200 bg-white object-contain p-1 shadow-sm transition-colors dark:border-[#2b2b2b]"
     />
   );
 }
@@ -71,7 +67,6 @@ const formatTransactionDate = (date) => {
   return parsed.toLocaleDateString("de-DE");
 };
 
-// Calculate labor hours if shield is active
 function CategoryLegend({ categories, currency = "EUR", salaryShield = false, hourlyWage = 15 }) {
   return (
     <div className="grid gap-3">
@@ -80,8 +75,8 @@ function CategoryLegend({ categories, currency = "EUR", salaryShield = false, ho
           <div className="flex items-start gap-2" key={category.label}>
             <CategoryDot color={category.color} />
             <div>
-              <p className="m-0 text-sm font-extrabold text-white">{category.label}</p>
-              <p className="m-0 text-sm font-bold text-[#daffde]/75">
+              <p className="m-0 text-sm font-extrabold text-black transition-colors dark:text-white">{category.label}</p>
+              <p className="m-0 text-sm font-bold text-gray-500 transition-colors dark:text-[#daffde]/75">
                 {salaryShield
                   ? `${(category.amount / (hourlyWage || 1)).toFixed(1)} hrs`
                   : formatAmount(category.amount, currency)}
@@ -90,7 +85,7 @@ function CategoryLegend({ categories, currency = "EUR", salaryShield = false, ho
           </div>
         ))
       ) : (
-        <p className="m-0 text-sm font-bold text-[#daffde]/60">No categories yet</p>
+        <p className="m-0 text-sm font-bold text-gray-500 transition-colors dark:text-[#daffde]/60">No categories yet</p>
       )}
     </div>
   );
@@ -99,23 +94,24 @@ function CategoryLegend({ categories, currency = "EUR", salaryShield = false, ho
 function SpendingPie({ categories }) {
   const total = categories.reduce((sum, category) => sum + category.amount, 0);
   let cursor = 0;
+
   const gradient = categories.length
-    ? categories
+    ? `conic-gradient(${categories
         .map((category) => {
           const start = cursor;
           const size = total > 0 ? (category.amount / total) * 100 : 0;
           cursor += size;
           return `${category.color} ${start}% ${cursor}%`;
         })
-        .join(", ")
-    : "#202020 0 100%";
+        .join(", ")})`
+    : "";
 
   return (
     <div
       aria-label="Spending category distribution"
-      className="h-36 w-36 rounded-full shadow-[0_0_40px_rgba(222,255,154,0.08)]"
+      className="h-36 w-36 rounded-full bg-gray-200 shadow-inner transition-colors dark:bg-[#202020] dark:shadow-[0_0_40px_rgba(222,255,154,0.08)]"
       role="img"
-      style={{ background: `conic-gradient(${gradient})` }}
+      style={categories.length ? { background: gradient } : {}}
     />
   );
 }
@@ -187,22 +183,21 @@ function TransactionTable({ onDeleteTransaction, onUpdateTransaction, transactio
   };
 
   return (
-    <div className="min-w-0 overflow-hidden rounded-2xl bg-white/8">
-      <div className="grid grid-cols-[0.8fr_0.8fr_1fr_0.9fr_1.4fr_auto] gap-3 bg-[#202020] px-4 py-3 text-xs font-extrabold text-white max-md:hidden xl:text-sm">
+    <div className="min-w-0 overflow-hidden rounded-2xl border border-gray-200 bg-white transition-colors dark:border-transparent dark:bg-white/8">
+      <div className="grid grid-cols-[0.8fr_0.8fr_1fr_0.9fr_1.4fr_auto] gap-3 bg-gray-100 px-4 py-3 text-xs font-extrabold text-black transition-colors max-md:hidden dark:bg-[#202020] dark:text-white xl:text-sm">
         <span>Date</span>
         <span>Type</span>
         <span>Category</span>
-        {/* Dynamic header text based on shield state */}
         <span>{salaryShield ? "Amount, hrs" : `Amount, ${currency}`}</span>
         <span>Description</span>
         <span className="text-right">Actions</span>
       </div>
 
-      <div className="divide-y divide-black/25">
+      <div className="divide-y divide-gray-200 transition-colors dark:divide-black/25">
         {transactions.length ? (
           <>
             {actionError ? (
-              <p className="m-0 bg-red-950/45 px-4 py-3 text-sm font-bold text-red-200">
+              <p className="m-0 bg-red-50 px-4 py-3 text-sm font-bold text-red-600 transition-colors dark:bg-red-950/45 dark:text-red-200">
                 {actionError}
               </p>
             ) : null}
@@ -213,7 +208,7 @@ function TransactionTable({ onDeleteTransaction, onUpdateTransaction, transactio
 
               return (
                 <article
-                  className="grid gap-2 bg-white/10 px-4 py-3 text-xs font-bold text-[#e9f5e8] md:grid-cols-[0.8fr_0.8fr_1fr_0.9fr_1.4fr_auto] md:items-center md:gap-3 xl:text-sm"
+                  className="grid gap-2 bg-white px-4 py-3 text-xs font-bold text-black transition-colors md:grid-cols-[0.8fr_0.8fr_1fr_0.9fr_1.4fr_auto] md:items-center md:gap-3 dark:bg-white/10 dark:text-[#e9f5e8] xl:text-sm"
                   key={transaction.id}
                 >
                   <span>{formatTransactionDate(transaction.date)}</span>
@@ -223,7 +218,7 @@ function TransactionTable({ onDeleteTransaction, onUpdateTransaction, transactio
                   {editing ? (
                     <>
                       <input
-                        className="min-h-9 rounded-lg border border-[#2b2b2b] bg-[#050505] px-3 text-sm text-white outline-none transition focus:border-[#deff9a]/70"
+                        className="min-h-9 rounded-lg border border-gray-300 bg-white px-3 text-sm text-black outline-none transition focus:border-green-500 dark:border-[#2b2b2b] dark:bg-[#050505] dark:text-white dark:focus:border-[#deff9a]/70"
                         disabled={pending}
                         min="0.01"
                         name="amount"
@@ -233,7 +228,7 @@ function TransactionTable({ onDeleteTransaction, onUpdateTransaction, transactio
                         value={editForm.amount}
                       />
                       <input
-                        className="min-h-9 rounded-lg border border-[#2b2b2b] bg-[#050505] px-3 text-sm text-white outline-none transition focus:border-[#deff9a]/70"
+                        className="min-h-9 rounded-lg border border-gray-300 bg-white px-3 text-sm text-black outline-none transition focus:border-green-500 dark:border-[#2b2b2b] dark:bg-[#050505] dark:text-white dark:focus:border-[#deff9a]/70"
                         disabled={pending}
                         name="description"
                         onChange={handleEditChange}
@@ -242,7 +237,7 @@ function TransactionTable({ onDeleteTransaction, onUpdateTransaction, transactio
                       />
                       <div className="flex justify-end gap-2">
                         <button
-                          className="min-h-9 rounded-lg bg-[#deff9a] px-3 text-xs font-black text-black transition hover:bg-white disabled:cursor-wait disabled:opacity-60"
+                          className="min-h-9 rounded-lg bg-green-100 px-3 text-xs font-black text-green-800 transition hover:bg-green-200 disabled:cursor-wait disabled:opacity-60 dark:bg-[#deff9a] dark:text-black dark:hover:bg-white"
                           disabled={pending}
                           onClick={() => handleSave(transaction)}
                           type="button"
@@ -250,7 +245,7 @@ function TransactionTable({ onDeleteTransaction, onUpdateTransaction, transactio
                           Save
                         </button>
                         <button
-                          className="min-h-9 rounded-lg border border-[#2b2b2b] px-3 text-xs font-black text-white transition hover:border-[#deff9a]/60 disabled:cursor-wait disabled:opacity-60"
+                          className="min-h-9 rounded-lg border border-gray-300 px-3 text-xs font-black text-black transition hover:border-gray-400 disabled:cursor-wait disabled:opacity-60 dark:border-[#2b2b2b] dark:text-white dark:hover:border-[#deff9a]/60"
                           disabled={pending}
                           onClick={cancelEditing}
                           type="button"
@@ -261,15 +256,13 @@ function TransactionTable({ onDeleteTransaction, onUpdateTransaction, transactio
                     </>
                   ) : (
                     <>
-                      {/* Dynamic cell text based on shield state */}
                       <span>
                         {salaryShield
                           ? (Number(transaction.amount ?? 0) / (hourlyWage || 1)).toFixed(1)
                           : Number(transaction.amount ?? 0).toFixed(2)}
                       </span>
 
-                      {/* dynamic auto-generated brand profile image */}
-                      <span className="flex items-center gap-2 text-[#daffde]/70">
+                      <span className="flex items-center gap-2 text-gray-500 transition-colors dark:text-[#daffde]/70">
                         <BrandIcon name={transaction.description || getTransactionCategory(transaction)} />
                         {transaction.description}
                       </span>
@@ -277,7 +270,7 @@ function TransactionTable({ onDeleteTransaction, onUpdateTransaction, transactio
                       <div className="flex justify-end gap-2">
                         <button
                           aria-label="Edit transaction"
-                          className="grid h-9 w-9 place-items-center rounded-lg border border-[#2b2b2b] text-base text-white transition hover:border-[#deff9a]/60 hover:text-[#deff9a] disabled:cursor-wait disabled:opacity-60"
+                          className="grid h-9 w-9 place-items-center rounded-lg border border-gray-300 text-base text-black transition hover:border-green-500 hover:text-green-600 disabled:cursor-wait disabled:opacity-60 dark:border-[#2b2b2b] dark:text-white dark:hover:border-[#deff9a]/60 dark:hover:text-[#deff9a]"
                           disabled={pending}
                           onClick={() => startEditing(transaction)}
                           title="Edit amount and description"
@@ -287,7 +280,7 @@ function TransactionTable({ onDeleteTransaction, onUpdateTransaction, transactio
                         </button>
                         <button
                           aria-label="Delete transaction"
-                          className="min-h-9 rounded-lg border border-red-300/30 px-3 text-xs font-black text-red-200 transition hover:border-red-200 hover:text-white disabled:cursor-wait disabled:opacity-60"
+                          className="min-h-9 rounded-lg border border-red-200 px-3 text-xs font-black text-red-500 transition hover:bg-red-50 hover:text-red-600 disabled:cursor-wait disabled:opacity-60 dark:border-red-300/30 dark:text-red-200 dark:hover:bg-transparent dark:hover:border-red-200 dark:hover:text-white"
                           disabled={pending}
                           onClick={() => handleDelete(transaction)}
                           type="button"
@@ -302,7 +295,7 @@ function TransactionTable({ onDeleteTransaction, onUpdateTransaction, transactio
             })}
           </>
         ) : (
-          <p className="m-0 bg-white/10 px-4 py-5 text-sm font-bold text-[#daffde]/65">
+          <p className="m-0 bg-gray-50 px-4 py-5 text-sm font-bold text-gray-500 transition-colors dark:bg-white/10 dark:text-[#daffde]/65">
             No transactions yet. Add one from Home to populate this table.
           </p>
         )}
@@ -323,7 +316,7 @@ function TransactionList({
   const categories = buildCategoryBreakdown(transactions);
 
   return (
-    <section className="grid min-h-[370px] min-w-0 gap-6 rounded-[28px] bg-[#111]/95 p-5 shadow-[0_20px_60px_rgba(0,0,0,0.42)] md:grid-cols-[190px_minmax(0,1fr)] xl:grid-cols-[210px_minmax(0,1fr)]">
+    <section className="grid min-h-[370px] min-w-0 gap-6 rounded-[28px] border border-gray-200 bg-white p-5 shadow-lg transition-colors dark:border-transparent dark:bg-[#111]/95 dark:shadow-[0_20px_60px_rgba(0,0,0,0.42)] md:grid-cols-[190px_minmax(0,1fr)] xl:grid-cols-[210px_minmax(0,1fr)]">
       <aside className="grid content-start justify-items-center gap-6 pt-2 md:justify-items-start">
         <SpendingPie categories={categories} />
         <CategoryLegend
@@ -335,7 +328,7 @@ function TransactionList({
       </aside>
 
       {transactionsState.loading ? (
-        <p className="m-0 rounded-xl border border-[#232323] bg-[#050505] px-3.5 py-3 leading-6 text-[#daffde]/75">
+        <p className="m-0 rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-3 leading-6 text-gray-500 transition-colors dark:border-[#232323] dark:bg-[#050505] dark:text-[#daffde]/75">
           Loading transactions...
         </p>
       ) : (

@@ -16,7 +16,6 @@ import { buildSession, clearSession, readStoredSession, saveSession } from "./ut
 import "./index.css";
 import AdminPanel from "./components/dashboard/AdminPanel";
 
-
 const getTransactionBalanceDelta = (transaction) => {
   const amount = Number(transaction.amount ?? 0);
   const isIncome = String(transaction.type ?? "").toLowerCase() === "income";
@@ -155,8 +154,8 @@ function App() {
     setActiveTab("home");
   };
 
-// Profile patch handler to update stateful session details locally
-const handleUpdateProfile = async (updatedData) => {
+  // Profile patch handler to update stateful session details locally
+  const handleUpdateProfile = async (updatedData) => {
     try {
       // 1. Check if the currency is actually being changed
       const oldCurrency = session.preferredCurrency || session.user?.preferredCurrency;
@@ -291,7 +290,7 @@ const handleUpdateProfile = async (updatedData) => {
 
   if (isAdminPage) {
     return (
-      <div className="grid min-h-screen place-items-center bg-[radial-gradient(circle_at_22%_10%,rgba(126,255,175,0.18),transparent_28rem),radial-gradient(circle_at_82%_82%,rgba(222,255,154,0.10),transparent_30rem),linear-gradient(145deg,#020302_0%,#071108_48%,#020302_100%)] p-[clamp(18px,4vw,48px)] font-sans text-[#daffde]">
+      <div className="grid min-h-screen place-items-center bg-[radial-gradient(circle_at_22%_10%,rgba(34,197,94,0.10),transparent_28rem),radial-gradient(circle_at_82%_82%,rgba(132,204,22,0.08),transparent_30rem),linear-gradient(145deg,#ffffff_0%,#f3fbf4_48%,#ffffff_100%)] p-[clamp(18px,4vw,48px)] font-sans text-black transition-colors dark:bg-[radial-gradient(circle_at_22%_10%,rgba(126,255,175,0.18),transparent_28rem),radial-gradient(circle_at_82%_82%,rgba(222,255,154,0.10),transparent_30rem),linear-gradient(145deg,#020302_0%,#071108_48%,#020302_100%)] dark:text-[#daffde]">
         <AdminPanel />
       </div>
     );
@@ -327,15 +326,15 @@ const handleUpdateProfile = async (updatedData) => {
   };
 
   return (
-    <div className="grid min-h-screen place-items-center bg-[radial-gradient(circle_at_22%_10%,rgba(126,255,175,0.18),transparent_28rem),radial-gradient(circle_at_82%_82%,rgba(222,255,154,0.10),transparent_30rem),linear-gradient(145deg,#020302_0%,#071108_48%,#020302_100%)] p-[clamp(18px,4vw,48px)] font-sans text-[#daffde]">
+    <div className="grid min-h-screen place-items-center bg-[radial-gradient(circle_at_22%_10%,rgba(34,197,94,0.10),transparent_28rem),radial-gradient(circle_at_82%_82%,rgba(132,204,22,0.08),transparent_30rem),linear-gradient(145deg,#ffffff_0%,#f3fbf4_48%,#ffffff_100%)] p-[clamp(18px,4vw,48px)] font-sans text-black transition-colors dark:bg-[radial-gradient(circle_at_22%_10%,rgba(126,255,175,0.18),transparent_28rem),radial-gradient(circle_at_82%_82%,rgba(222,255,154,0.10),transparent_30rem),linear-gradient(145deg,#020302_0%,#071108_48%,#020302_100%)] dark:text-[#daffde]">
       {session ? (
         <div className="flex w-full flex-col items-center">
-          <nav className="mb-6 flex w-full gap-6 self-start border-b border-[#1a1a1a] px-4 pb-2">
+          <nav className="mb-6 flex w-full gap-6 self-start border-b border-gray-200 px-4 pb-2 transition-colors dark:border-[#1a1a1a]">
             <button
               className={`flex items-center gap-2 pb-2 text-lg font-bold transition-colors duration-150 ${
                 activeTab === "home"
-                  ? "border-b-2 border-[#DEFF9A] text-white"
-                  : "text-gray-500 hover:text-white"
+                  ? "border-b-2 border-green-500 text-black dark:border-[#DEFF9A] dark:text-white"
+                  : "text-gray-500 hover:text-black dark:hover:text-white"
               }`}
               onClick={() => setActiveTab("home")}
               type="button"
@@ -345,8 +344,8 @@ const handleUpdateProfile = async (updatedData) => {
             <button
               className={`flex items-center gap-2 pb-2 text-lg font-bold transition-colors duration-150 ${
                 activeTab === "dashboard"
-                  ? "border-b-2 border-[#DEFF9A] text-white"
-                  : "text-gray-500 hover:text-white"
+                  ? "border-b-2 border-green-500 text-black dark:border-[#DEFF9A] dark:text-white"
+                  : "text-gray-500 hover:text-black dark:hover:text-white"
               }`}
               onClick={() => setActiveTab("dashboard")}
               type="button"
@@ -356,8 +355,8 @@ const handleUpdateProfile = async (updatedData) => {
             <button
               className={`flex items-center gap-2 pb-2 text-lg font-bold transition-colors duration-150 ${
                 activeTab === "settings"
-                  ? "border-b-2 border-[#DEFF9A] text-white"
-                  : "text-gray-500 hover:text-white"
+                  ? "border-b-2 border-green-500 text-black dark:border-[#DEFF9A] dark:text-white"
+                  : "text-gray-500 hover:text-black dark:hover:text-white"
               }`}
               onClick={() => setActiveTab("settings")}
               type="button"

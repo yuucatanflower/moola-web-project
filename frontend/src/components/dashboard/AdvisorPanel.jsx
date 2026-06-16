@@ -35,32 +35,32 @@ function AdvisorPanel({ monthlyExpenses, transactions, sessionToken }) {
   };
 
   return (
-    <section className="flex flex-col overflow-hidden rounded-[26px] bg-white/10 shadow-[0_18px_50px_rgba(0,0,0,0.38)]">
-      <div className="rounded-t-[26px] bg-[#202020] px-4 py-3 text-lg font-extrabold text-[#daffde]/70">
+    <section className="flex flex-col overflow-hidden rounded-[26px] border border-gray-200 bg-white shadow-lg transition-colors dark:border-none dark:bg-white/10 dark:shadow-[0_18px_50px_rgba(0,0,0,0.38)]">
+      <div className="rounded-t-[26px] bg-gray-100 px-4 py-3 text-lg font-extrabold text-black transition-colors dark:bg-[#202020] dark:text-[#daffde]/70">
         Ask Moola Advisor...
       </div>
 
       {/* Dynamic Chat Window Area */}
-      <div className="flex-1 grid gap-5 bg-white/10 p-5 content-start min-h-[220px]">
+      <div className="flex-1 grid gap-5 bg-gray-50 p-5 content-start min-h-[220px] transition-colors dark:bg-white/10">
         {/* User Prompt Bubble */}
-        <div className="justify-self-end rounded-2xl rounded-br-none bg-[#111] px-4 py-2 text-sm font-bold text-white border border-[#333]">
+        <div className="justify-self-end rounded-2xl rounded-br-none border border-gray-300 bg-white px-4 py-2 text-sm font-bold text-black transition-colors dark:border-[#333] dark:bg-[#111] dark:text-white">
           {currentPrompt}
         </div>
 
         {/* AI Response Bubble */}
-        <div className={`max-w-[360px] rounded-2xl rounded-bl-none bg-black px-4 py-3 text-sm font-bold leading-6 transition-colors duration-300 ${isLoading ? 'text-gray-500 animate-pulse' : 'text-[#daffde]'}`}>
+        <div className={`max-w-[360px] rounded-2xl rounded-bl-none px-4 py-3 text-sm font-bold leading-6 transition-colors duration-300 ${isLoading ? 'text-gray-500 animate-pulse bg-gray-200 dark:bg-[#222]' : 'bg-[#DEFF9A]/30 text-black dark:bg-black dark:text-[#daffde]'}`}>
           {advice}
         </div>
       </div>
 
-      {/* Interactive Prompt Action Buttons (Neutral Tone) */}
-      <div className="bg-[#151515] p-3 border-t border-[#2a2a2a]">
+      {/* Interactive Prompt Action Buttons */}
+      <div className="bg-gray-100 p-3 border-t border-gray-200 transition-colors dark:border-[#2a2a2a] dark:bg-[#151515]">
         <p className="text-xs font-bold text-gray-500 mb-2 uppercase ml-1">Select an audit vector:</p>
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => handleAskAI("Review my impulse purchases.")}
             disabled={isLoading}
-            className="flex-1 rounded-lg bg-[#222] px-3 py-2 text-xs font-bold text-white transition hover:bg-[#333] hover:text-[#deff9a] disabled:opacity-50"
+            className="flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-bold text-black transition hover:bg-gray-200 disabled:opacity-50 dark:border-none dark:bg-[#222] dark:text-white dark:hover:bg-[#333] dark:hover:text-[#deff9a]"
           >
             Review Impulses
           </button>
@@ -68,7 +68,7 @@ function AdvisorPanel({ monthlyExpenses, transactions, sessionToken }) {
           <button
             onClick={() => handleAskAI("Analyze my spending habits.")}
             disabled={isLoading}
-            className="flex-1 rounded-lg bg-[#222] px-3 py-2 text-xs font-bold text-white transition hover:bg-[#333] hover:text-[#deff9a] disabled:opacity-50"
+            className="flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-bold text-black transition hover:bg-gray-200 disabled:opacity-50 dark:border-none dark:bg-[#222] dark:text-white dark:hover:bg-[#333] dark:hover:text-[#deff9a]"
           >
             Analyze Spending
           </button>
@@ -76,7 +76,7 @@ function AdvisorPanel({ monthlyExpenses, transactions, sessionToken }) {
           <button
             onClick={() => handleAskAI("Identify my largest expenses.")}
             disabled={isLoading}
-            className="flex-1 rounded-lg bg-[#222] px-3 py-2 text-xs font-bold text-white transition hover:bg-[#333] hover:text-[#deff9a] disabled:opacity-50"
+            className="flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-bold text-black transition hover:bg-gray-200 disabled:opacity-50 dark:border-none dark:bg-[#222] dark:text-white dark:hover:bg-[#333] dark:hover:text-[#deff9a]"
           >
             Identify Largest Expenses
           </button>

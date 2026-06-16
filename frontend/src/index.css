@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Enables manual dark mode toggling via the 'dark' class */
+@custom-variant dark (&:is(.dark *));
+
 html,
 body,
 #root {
