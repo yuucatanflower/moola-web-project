@@ -15,7 +15,7 @@ import java.util.UUID;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-// database object for an app user login and wallet data
+// Database object for an app user login and wallet data
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -34,9 +34,17 @@ public class User {
     @Column(nullable = false)
     private BigDecimal hourlyWage = BigDecimal.valueOf(15.0);
 
-    // database column to remember the ai personality tone
+    // Database column to remember the AI personality tone
     @Column(nullable = false)
     private String advisorTone = "roast";
+
+    // Stores the user's preferred currency
+    @Column(nullable = false)
+    private String preferredCurrency = "EUR";
+
+    // Stores the user's preference for hiding absolute currency
+    @Column(name = "salary_shield", nullable = false)
+    private boolean salaryShield = false;
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Wallet wallet;

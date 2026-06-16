@@ -63,6 +63,8 @@ public class AuthController {
         safeUserData.put("balance", currentBalance);
         safeUserData.put("currency", walletCurrency);
         safeUserData.put("advisorTone", user.getAdvisorTone()); // included to remember user preference upon login
+        safeUserData.put("preferredCurrency", user.getPreferredCurrency());
+        safeUserData.put("salaryShield", user.isSalaryShield());
 
         Map<String, Object> response = new HashMap<>();
         response.put("accessToken", token);
@@ -105,6 +107,22 @@ public class AuthController {
             }
         }
 
+        // apply preferred currency update
+        if (body.containsKey("preferredCurrency")) {
+            String newCurrency = (String) body.get("preferredCurrency");
+            if (newCurrency != null) {
+                user.setPreferredCurrency(newCurrency.trim());
+            }
+        }
+
+        // apply salary shield update
+        if (body.containsKey("salaryShield")) {
+            Object shieldObj = body.get("salaryShield");
+            if (shieldObj != null) {
+                user.setSalaryShield(Boolean.parseBoolean(shieldObj.toString()));
+            }
+        }
+
         // save modifications to the database
         User updatedUser = userRepository.save(user);
 
@@ -124,6 +142,8 @@ public class AuthController {
         safeUserData.put("balance", currentBalance);
         safeUserData.put("currency", walletCurrency);
         safeUserData.put("advisorTone", updatedUser.getAdvisorTone()); // synchronizes frontend state context after updates
+        safeUserData.put("preferredCurrency", updatedUser.getPreferredCurrency());
+        safeUserData.put("salaryShield", updatedUser.isSalaryShield());
 
         return ResponseEntity.ok(safeUserData);
     }

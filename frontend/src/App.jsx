@@ -163,7 +163,8 @@ const handleUpdateProfile = async (updatedData) => {
         newUsername: updatedData.username,
         hourlyWage: updatedData.hourlyWage,
         advisorTone: updatedData.advisorTone,
-        preferredCurrency: updatedData.preferredCurrency
+        preferredCurrency: updatedData.preferredCurrency,
+        salaryShield: updatedData.salaryShield
       });
 
       setSession((currentSession) => {
@@ -175,12 +176,14 @@ const handleUpdateProfile = async (updatedData) => {
           hourlyWage: updatedData.hourlyWage ?? currentSession.hourlyWage,
           advisorTone: updatedData.advisorTone ?? currentSession.advisorTone,
           preferredCurrency: updatedData.preferredCurrency ?? currentSession.preferredCurrency,
+          salaryShield: updatedData.salaryShield ?? currentSession.salaryShield,
           user: {
             ...currentSession.user,
             username: updatedData.username ?? currentSession.user?.username,
             hourlyWage: updatedData.hourlyWage ?? currentSession.user?.hourlyWage,
             advisorTone: updatedData.advisorTone ?? currentSession.user?.advisorTone,
             preferredCurrency: updatedData.preferredCurrency ?? currentSession.user?.preferredCurrency,
+            salaryShield: updatedData.salaryShield ?? currentSession.user?.salaryShield,
           },
         };
 
@@ -190,7 +193,6 @@ const handleUpdateProfile = async (updatedData) => {
         return nextSession;
       });
 
-      // Log success
       console.log("Successfully saved preferences!");
     } catch (error) {
       console.error("Error with Saving: ", error.message);

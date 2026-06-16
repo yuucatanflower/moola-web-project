@@ -29,8 +29,10 @@ function Dashboard({
   const monthlyIncome = calculateMonthlyIncome(transactions);
   const monthlyExpenses = calculateMonthlyExpenses(transactions);
 
-  // Extract the currency saved in the user's session
+  // Extract the currency and shield settings saved in the user's session
   const userCurrency = session?.user?.preferredCurrency || session?.preferredCurrency || "EUR";
+  const salaryShield = session?.user?.salaryShield || session?.salaryShield || false;
+  const hourlyWage = Number(session?.user?.hourlyWage || session?.hourlyWage || 15);
 
   return (
     <div className="w-full">
@@ -49,9 +51,10 @@ function Dashboard({
 
       <main className="grid min-w-0 gap-5 rounded-[34px] bg-[radial-gradient(circle_at_45%_40%,rgba(218,255,154,0.08),transparent_32rem),linear-gradient(145deg,rgba(26,30,26,0.96),rgba(5,8,5,0.98))] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.6)] sm:p-7">
         <section className="grid min-w-0 gap-5 lg:grid-cols-3">
-          <SummaryCard amount={totalBalance} title="Total Balance" currency={userCurrency} />
-          <SummaryCard accent="text-[#deff9a]" amount={monthlyIncome} title="Monthly Income" currency={userCurrency} />
-          <SummaryCard accent="text-red-300" amount={monthlyExpenses} title="Monthly Expenses" currency={userCurrency} />
+          {/* Pass shield and wage props to cards */}
+          <SummaryCard amount={totalBalance} title="Total Balance" currency={userCurrency} salaryShield={salaryShield} hourlyWage={hourlyWage} />
+          <SummaryCard accent="text-[#deff9a]" amount={monthlyIncome} title="Monthly Income" currency={userCurrency} salaryShield={salaryShield} hourlyWage={hourlyWage} />
+          <SummaryCard accent="text-red-300" amount={monthlyExpenses} title="Monthly Expenses" currency={userCurrency} salaryShield={salaryShield} hourlyWage={hourlyWage} />
         </section>
 
         <section className="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(360px,0.95fr)]">
@@ -61,10 +64,11 @@ function Dashboard({
             transactions={transactions.filter((t) => !t.recurrent)}
             transactionsState={transactionsState}
             currency={userCurrency}
+            salaryShield={salaryShield}
+            hourlyWage={hourlyWage}
           />
 
           <div className="grid min-w-0 content-start gap-5">
-            {/* The sessionToken prop is injected here to authorize backend AI requests */}
             <AdvisorPanel
               monthlyExpenses={monthlyExpenses}
               transactions={transactions}
@@ -73,6 +77,9 @@ function Dashboard({
             <RecurringPayments
               transactions={transactions}
               onDeleteTransaction={onDeleteTransaction}
+              currency={userCurrency}
+              salaryShield={salaryShield}
+              hourlyWage={hourlyWage}
             />
           </div>
         </section>

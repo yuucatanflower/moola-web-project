@@ -71,7 +71,8 @@ const formatTransactionDate = (date) => {
   return parsed.toLocaleDateString("de-DE");
 };
 
-function CategoryLegend({ categories, currency = "EUR" }) {
+// Calculate labor hours if shield is active
+function CategoryLegend({ categories, currency = "EUR", salaryShield = false, hourlyWage = 15 }) {
   return (
     <div className="grid gap-3">
       {categories.length ? (
@@ -81,7 +82,9 @@ function CategoryLegend({ categories, currency = "EUR" }) {
             <div>
               <p className="m-0 text-sm font-extrabold text-white">{category.label}</p>
               <p className="m-0 text-sm font-bold text-[#daffde]/75">
-                {formatAmount(category.amount, currency)}
+                {salaryShield
+                  ? `${(category.amount / (hourlyWage || 1)).toFixed(1)} hrs`
+                  : formatAmount(category.amount, currency)}
               </p>
             </div>
           </div>
@@ -117,7 +120,7 @@ function SpendingPie({ categories }) {
   );
 }
 
-function TransactionTable({ onDeleteTransaction, onUpdateTransaction, transactions, currency = "EUR" }) {
+function TransactionTable({ onDeleteTransaction, onUpdateTransaction, transactions, currency = "EUR", salaryShield = false, hourlyWage = 15 }) {
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({ amount: "", description: "" });
   const [pendingId, setPendingId] = useState(null);
@@ -189,7 +192,8 @@ function TransactionTable({ onDeleteTransaction, onUpdateTransaction, transactio
         <span>Date</span>
         <span>Type</span>
         <span>Category</span>
-        <span>Amount, {currency}</span>
+        {/* Dynamic header text based on shield state */}
+        <span>{salaryShield ? "Amount, hrs" : `Amount, ${currency}`}</span>
         <span>Description</span>
         <span className="text-right">Actions</span>
       </div>
@@ -257,7 +261,12 @@ function TransactionTable({ onDeleteTransaction, onUpdateTransaction, transactio
                     </>
                   ) : (
                     <>
-                      <span>{Number(transaction.amount ?? 0).toFixed(2)}</span>
+                      {/* Dynamic cell text based on shield state */}
+                      <span>
+                        {salaryShield
+                          ? (Number(transaction.amount ?? 0) / (hourlyWage || 1)).toFixed(1)
+                          : Number(transaction.amount ?? 0).toFixed(2)}
+                      </span>
 
                       {/* dynamic auto-generated brand profile image */}
                       <span className="flex items-center gap-2 text-[#daffde]/70">
@@ -307,7 +316,9 @@ function TransactionList({
   onUpdateTransaction,
   transactions,
   transactionsState,
-  currency = "EUR"
+  currency = "EUR",
+  salaryShield = false,
+  hourlyWage = 15
 }) {
   const categories = buildCategoryBreakdown(transactions);
 
@@ -315,7 +326,12 @@ function TransactionList({
     <section className="grid min-h-[370px] min-w-0 gap-6 rounded-[28px] bg-[#111]/95 p-5 shadow-[0_20px_60px_rgba(0,0,0,0.42)] md:grid-cols-[190px_minmax(0,1fr)] xl:grid-cols-[210px_minmax(0,1fr)]">
       <aside className="grid content-start justify-items-center gap-6 pt-2 md:justify-items-start">
         <SpendingPie categories={categories} />
-        <CategoryLegend categories={categories} currency={currency} />
+        <CategoryLegend
+          categories={categories}
+          currency={currency}
+          salaryShield={salaryShield}
+          hourlyWage={hourlyWage}
+        />
       </aside>
 
       {transactionsState.loading ? (
@@ -328,6 +344,8 @@ function TransactionList({
           onUpdateTransaction={onUpdateTransaction}
           transactions={transactions}
           currency={currency}
+          salaryShield={salaryShield}
+          hourlyWage={hourlyWage}
         />
       )}
     </section>
