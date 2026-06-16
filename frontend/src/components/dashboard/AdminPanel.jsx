@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { deleteUser, fetchUsers, updateUser } from "../../services/api";
 
 function AdminPanel() {
@@ -6,6 +6,15 @@ function AdminPanel() {
   const [authorized, setAuthorized] = useState(false);
   const [users, setUsers] = useState([]);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    const isDarkMode = localStorage.getItem('theme') === 'dark';
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, []);
 
   const handleLogin = async () => {
     try {

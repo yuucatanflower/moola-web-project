@@ -77,14 +77,16 @@ function Settings({ session, onUpdateProfile, onLogout }) {
   };
 
   // Change theme class on the HTML root element via dropdown
-  const handleThemeChange = (e) => {
+const handleThemeChange = (e) => {
     const selectedTheme = e.target.value;
     setAppTheme(selectedTheme);
 
     if (selectedTheme === "dark") {
       document.documentElement.classList.add("dark");
+      localStorage.setItem('theme', 'dark');
     } else {
       document.documentElement.classList.remove("dark");
+      localStorage.setItem('theme', 'light');
     }
   };
 
