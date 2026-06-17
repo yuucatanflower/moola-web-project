@@ -48,4 +48,12 @@ public class User {
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Wallet wallet;
+
+    public String getAdvisorTone() {
+        return advisorTone;
+    }
+
+    public void setAdvisorTone(String advisorTone) {
+        this.advisorTone = advisorTone;
+    }
 }
