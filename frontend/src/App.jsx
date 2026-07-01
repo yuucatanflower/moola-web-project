@@ -162,61 +162,53 @@ function App() {
     setActiveTab("home");
   };
 
-  // Profile patch handler to update stateful session details locally
+  // Profile patch handler to update stateful session details locally.
+  // Errors are intentionally left to propagate so Settings can show them to the user.
   const handleUpdateProfile = async (updatedData) => {
-    try {
-      // 1. Check if the currency is actually being changed
-      const oldCurrency = session.preferredCurrency || session.user?.preferredCurrency;
-      const isCurrencyChanged = updatedData.preferredCurrency && updatedData.preferredCurrency !== oldCurrency;
+    // 1. Check if the currency is actually being changed
+    const oldCurrency = session.preferredCurrency || session.user?.preferredCurrency;
+    const isCurrencyChanged = updatedData.preferredCurrency && updatedData.preferredCurrency !== oldCurrency;
 
-      // 2. Send the update to the backend AND save the response (which contains the newly calculated wage and balance)
-      const updatedUserResponse = await updateUserProfile(session.accessToken, {
-        currentUsername: session.username || session.user?.username,
-        newUsername: updatedData.username,
-        hourlyWage: updatedData.hourlyWage,
-        advisorTone: updatedData.advisorTone,
-        preferredCurrency: updatedData.preferredCurrency,
-        salaryShield: updatedData.salaryShield
-      });
+    // 2. Send the update to the backend AND save the response (which contains the newly calculated wage and balance)
+    const updatedUserResponse = await updateUserProfile(session.accessToken, {
+      newUsername: updatedData.username,
+      hourlyWage: updatedData.hourlyWage,
+      advisorTone: updatedData.advisorTone,
+      preferredCurrency: updatedData.preferredCurrency,
+      salaryShield: updatedData.salaryShield
+    });
 
-      // 3. IF the currency changed, force React to download the newly converted transactions
-      if (isCurrencyChanged) {
-        const freshTransactions = await fetchTransactions(session.accessToken);
-        setTransactions(Array.isArray(freshTransactions) ? freshTransactions : []);
-      }
+    // 3. IF the currency changed, force React to download the newly converted transactions
+    if (isCurrencyChanged) {
+      const freshTransactions = await fetchTransactions(session.accessToken);
+      setTransactions(Array.isArray(freshTransactions) ? freshTransactions : []);
+    }
 
-      // 4. Update the local state with the precise math returned from the backend
-      setSession((currentSession) => {
-        if (!currentSession) return currentSession;
+    // 4. Update the local state with the precise math returned from the backend
+    setSession((currentSession) => {
+      if (!currentSession) return currentSession;
 
-        const nextSession = {
-          ...currentSession,
+      const nextSession = {
+        ...currentSession,
+        username: updatedUserResponse.username ?? updatedData.username,
+        hourlyWage: updatedUserResponse.hourlyWage ?? updatedData.hourlyWage,
+        advisorTone: updatedUserResponse.advisorTone ?? updatedData.advisorTone,
+        preferredCurrency: updatedUserResponse.preferredCurrency ?? updatedData.preferredCurrency,
+        salaryShield: updatedUserResponse.salaryShield ?? updatedData.salaryShield,
+        user: {
+          ...currentSession.user,
           username: updatedUserResponse.username ?? updatedData.username,
           hourlyWage: updatedUserResponse.hourlyWage ?? updatedData.hourlyWage,
           advisorTone: updatedUserResponse.advisorTone ?? updatedData.advisorTone,
           preferredCurrency: updatedUserResponse.preferredCurrency ?? updatedData.preferredCurrency,
           salaryShield: updatedUserResponse.salaryShield ?? updatedData.salaryShield,
-          user: {
-            ...currentSession.user,
-            username: updatedUserResponse.username ?? updatedData.username,
-            hourlyWage: updatedUserResponse.hourlyWage ?? updatedData.hourlyWage,
-            advisorTone: updatedUserResponse.advisorTone ?? updatedData.advisorTone,
-            preferredCurrency: updatedUserResponse.preferredCurrency ?? updatedData.preferredCurrency,
-            salaryShield: updatedUserResponse.salaryShield ?? updatedData.salaryShield,
-            currentBalance: updatedUserResponse.balance ?? currentSession.user?.currentBalance
-          },
-        };
+          currentBalance: updatedUserResponse.balance ?? currentSession.user?.currentBalance
+        },
+      };
 
-        if (typeof saveSession === "function") {
-          saveSession(nextSession);
-        }
-        return nextSession;
-      });
-
-      console.log("Successfully saved preferences and synced new currency math!");
-    } catch (error) {
-      console.error("Error with Saving: ", error.message);
-    }
+      saveSession(nextSession);
+      return nextSession;
+    });
   };
 
   const updateSessionBalance = (balanceUpdater) => {
@@ -247,6 +239,8 @@ function App() {
   const handleDeleteTransaction = async (transactionId) => {
     const deletedTransaction = transactions.find((transaction) => transaction.id === transactionId);
 
+    // intentionally not caught here: TransactionList wraps this call in its own
+    // try/catch and surfaces the error inline next to the row being deleted
     await deleteTransaction(session.accessToken, transactionId);
 
     setTransactions((currentTransactions) =>
@@ -274,9 +268,6 @@ function App() {
       date: currentTransaction.date,
       description: updates.description ?? currentTransaction.description,
       impulseBuy: currentTransaction.impulseBuy ?? currentTransaction.isImpulseBuy ?? false,
-      isImpulseBuy: currentTransaction.impulseBuy ?? currentTransaction.isImpulseBuy ?? false,
-      isRecurrent: currentTransaction.recurrent ?? currentTransaction.isRecurrent ?? false,
-      isRegret: currentTransaction.regret ?? currentTransaction.isRegret ?? false,
       recurrent: currentTransaction.recurrent ?? currentTransaction.isRecurrent ?? false,
       regret: currentTransaction.regret ?? currentTransaction.isRegret ?? false,
       type: currentTransaction.type ?? "EXPENSE",

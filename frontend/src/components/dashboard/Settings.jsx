@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState } from "react";
 import BrandMark from "../common/BrandMark";
 
 function Settings({ session, onUpdateProfile, onLogout }) {
@@ -16,10 +16,17 @@ function Settings({ session, onUpdateProfile, onLogout }) {
   const [cooldownTimer, setCooldownTimer] = useState("24");
   const [advisorTone, setAdvisorTone] = useState(initialTone);
   const [preferredCurrency, setPreferredCurrency] = useState(initialCurrency);
-  const [appTheme, setAppTheme] = useState("dark"); // State for dropdown
+  const [appTheme, setAppTheme] = useState(() =>
+    document.documentElement.classList.contains("dark") ? "dark" : "light"
+  );
+  const [profileError, setProfileError] = useState("");
 
-  // Synchronize component state values smoothly when routing or mutating parent context
-  useEffect(() => {
+  // Re-sync the form fields whenever a new session object comes in (e.g. after
+  // login or a profile save). Adjusted during render, per React's guidance on
+  // deriving state from props, instead of a useEffect that would cost an extra render.
+  const [syncedSession, setSyncedSession] = useState(session);
+  if (session !== syncedSession) {
+    setSyncedSession(session);
     if (session) {
       setUsername(session?.username || session?.user?.username || "");
       setHourlyWage(session?.user?.hourlyWage || session?.hourlyWage || "15");
@@ -27,53 +34,51 @@ function Settings({ session, onUpdateProfile, onLogout }) {
       setPreferredCurrency(session?.user?.preferredCurrency || session?.preferredCurrency || "EUR");
       setSalaryShield(session?.user?.salaryShield || session?.salaryShield || false);
     }
-  }, [session]);
+  }
 
-  // Check current theme state on component mount
-  useEffect(() => {
-    setAppTheme(document.documentElement.classList.contains("dark") ? "dark" : "light");
-  }, []);
+  const saveProfile = async (payload) => {
+    setProfileError("");
+    try {
+      await onUpdateProfile(payload);
+    } catch (error) {
+      setProfileError(error.message || "Failed to save settings.");
+    }
+  };
 
   const handleCurrencyChange = (e) => {
     const newCurrency = e.target.value;
     setPreferredCurrency(newCurrency);
-    if (onUpdateProfile) {
-      onUpdateProfile({
-        username,
-        hourlyWage: Number(hourlyWage),
-        advisorTone,
-        preferredCurrency: newCurrency,
-        salaryShield
-      });
-    }
+    saveProfile({
+      username,
+      hourlyWage: Number(hourlyWage),
+      advisorTone,
+      preferredCurrency: newCurrency,
+      salaryShield
+    });
   };
 
   const handleToneChange = (newTone) => {
     setAdvisorTone(newTone);
-    if (onUpdateProfile) {
-      onUpdateProfile({
-        username,
-        hourlyWage: Number(hourlyWage),
-        advisorTone: newTone,
-        preferredCurrency,
-        salaryShield
-      });
-    }
+    saveProfile({
+      username,
+      hourlyWage: Number(hourlyWage),
+      advisorTone: newTone,
+      preferredCurrency,
+      salaryShield
+    });
   };
 
   // Auto-save the shield toggle instantly
   const handleShieldChange = (e) => {
     const isEnabled = e.target.checked;
     setSalaryShield(isEnabled);
-    if (onUpdateProfile) {
-      onUpdateProfile({
-        username,
-        hourlyWage: Number(hourlyWage),
-        advisorTone,
-        preferredCurrency,
-        salaryShield: isEnabled
-      });
-    }
+    saveProfile({
+      username,
+      hourlyWage: Number(hourlyWage),
+      advisorTone,
+      preferredCurrency,
+      salaryShield: isEnabled
+    });
   };
 
   // Change theme class on the HTML root element via dropdown
@@ -92,17 +97,13 @@ const handleThemeChange = (e) => {
 
   const handleSaveProfile = (e) => {
     e.preventDefault();
-    if (onUpdateProfile) {
-      onUpdateProfile({
-        username,
-        hourlyWage: Number(hourlyWage),
-        advisorTone,
-        preferredCurrency,
-        salaryShield
-      });
-    } else {
-      console.error("-> ERROR: onUpdateProfile is not sent to Settings!");
-    }
+    saveProfile({
+      username,
+      hourlyWage: Number(hourlyWage),
+      advisorTone,
+      preferredCurrency,
+      salaryShield
+    });
   };
 
   return (
@@ -129,6 +130,12 @@ const handleThemeChange = (e) => {
             </div>
 
             <form onSubmit={handleSaveProfile} className="flex flex-col gap-6">
+              {profileError && (
+                <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-600 dark:border-red-500/30 dark:bg-[#2a0e0e] dark:text-[#ff6b6b]">
+                  ⚠️ {profileError}
+                </div>
+              )}
+
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-bold uppercase text-gray-500 transition-colors dark:text-[#daffde]/55">Username</label>
                 <input

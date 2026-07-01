@@ -73,10 +73,7 @@ function Home({ onAddTransaction, token }) {
       date: new Date().toISOString().split("T")[0],
       description: description.trim() || (type === "INCOME" ? "Income Log" : "Expense Log"),
       impulseBuy: type === "EXPENSE" ? impulseBuy : false,
-      isImpulseBuy: type === "EXPENSE" ? impulseBuy : false,
-      isRecurrent: recurrent,
-      isRegret: type === "EXPENSE" ? regret : false,
-      recurrent: recurrent,
+      recurrent,
       regret: type === "EXPENSE" ? regret : false,
       type,
     };
