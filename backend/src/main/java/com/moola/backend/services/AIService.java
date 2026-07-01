@@ -1,5 +1,7 @@
 package com.moola.backend.services;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -13,6 +15,8 @@ import java.util.Map;
 @Service
 // Calls the Groq REST API and turns recent transactions into short spending advice
 public class AIService {
+
+    private static final Logger logger = LoggerFactory.getLogger(AIService.class);
 
     @Value("${GROQ_KEY}")
     private String apiKey;
@@ -62,7 +66,9 @@ public class AIService {
                 }
             }
         } catch (Exception e) {
-            return "Failed to process data log: " + e.getMessage();
+            // log the real cause server-side; never echo internal exception details to the client
+            logger.error("Groq advice request failed", e);
+            return "Unable to reach the advisor right now. Please try again later.";
         }
         return "Transaction database analysis unavailable.";
     }

@@ -41,7 +41,7 @@ public class AIServiceTest {
     void getFinancialAdvice_WhenApiKeyIsMissing_ShouldReturnWarning() {
         ReflectionTestUtils.setField(aiService, "apiKey", "");
 
-        String result = aiService.getFinancialAdvice("test data");
+        String result = aiService.getFinancialAdvice("test data", "roast");
 
         assertEquals("Provide a valid Groq API key to check your spending.", result);
     }
@@ -60,7 +60,7 @@ public class AIServiceTest {
         when(restTemplate.postForEntity(anyString(), any(HttpEntity.class), eq(Map.class)))
                 .thenReturn(mockResponseEntity);
 
-        String result = aiService.getFinancialAdvice("[Coffee, amt:5.00]");
+        String result = aiService.getFinancialAdvice("[Coffee, amt:5.00]", "roast");
 
         assertEquals("Stop buying expensive coffee.", result);
     }
@@ -72,8 +72,9 @@ public class AIServiceTest {
         when(restTemplate.postForEntity(anyString(), any(HttpEntity.class), eq(Map.class)))
                 .thenThrow(new RuntimeException("Connection Timeout"));
 
-        String result = aiService.getFinancialAdvice("data");
+        String result = aiService.getFinancialAdvice("data", "roast");
 
-        assertTrue(result.startsWith("Failed to process data log:"));
+        // the raw exception message must never leak to the client
+        assertEquals("Unable to reach the advisor right now. Please try again later.", result);
     }
 }
