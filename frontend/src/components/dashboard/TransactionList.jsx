@@ -109,7 +109,7 @@ function SpendingPie({ categories }) {
   return (
     <div
       aria-label="Spending category distribution"
-      className="h-36 w-36 rounded-full bg-gray-200 shadow-inner transition-colors dark:bg-[#202020] dark:shadow-[0_0_40px_rgba(222,255,154,0.08)]"
+      className="h-36 w-36 rounded-full bg-gray-200 shadow-[0_10px_28px_rgba(0,0,0,0.18)] ring-1 ring-black/5 transition-colors dark:bg-[#202020] dark:shadow-[0_10px_32px_rgba(0,0,0,0.55),0_0_40px_rgba(222,255,154,0.08)] dark:ring-white/10"
       role="img"
       style={categories.length ? { background: gradient } : {}}
     />
@@ -184,7 +184,7 @@ function TransactionTable({ onDeleteTransaction, onUpdateTransaction, transactio
 
   return (
     <div className="min-w-0 overflow-hidden rounded-2xl border border-gray-200 bg-white transition-colors dark:border-transparent dark:bg-white/8">
-      <div className="grid grid-cols-[0.8fr_0.8fr_1fr_0.9fr_1.4fr_auto] gap-3 bg-gray-100 px-4 py-3 text-xs font-extrabold text-black transition-colors max-md:hidden dark:bg-[#202020] dark:text-white xl:text-sm">
+      <div className="grid grid-cols-[0.8fr_0.8fr_1fr_1.2fr_1.3fr_auto] gap-3 bg-gray-100 px-4 py-3 text-xs font-extrabold text-black transition-colors max-md:hidden dark:bg-[#202020] dark:text-white xl:text-sm">
         <span>Date</span>
         <span>Type</span>
         <span>Category</span>
@@ -208,7 +208,7 @@ function TransactionTable({ onDeleteTransaction, onUpdateTransaction, transactio
 
               return (
                 <article
-                  className="grid gap-2 bg-white px-4 py-3 text-xs font-bold text-black transition-colors md:grid-cols-[0.8fr_0.8fr_1fr_0.9fr_1.4fr_auto] md:items-center md:gap-3 dark:bg-white/10 dark:text-[#e9f5e8] xl:text-sm"
+                  className="grid gap-2 bg-white px-4 py-3 text-xs font-bold text-black transition-colors md:grid-cols-[0.8fr_0.8fr_1fr_1.2fr_1.3fr_auto] md:items-center md:gap-3 dark:bg-white/10 dark:text-[#e9f5e8] xl:text-sm"
                   key={transaction.id}
                 >
                   <span>{formatTransactionDate(transaction.date)}</span>
@@ -223,7 +223,7 @@ function TransactionTable({ onDeleteTransaction, onUpdateTransaction, transactio
                   {editing ? (
                     <>
                       <input
-                        className="min-h-9 w-full min-w-0 rounded-lg border border-gray-300 bg-white px-3 text-sm text-black outline-none transition focus:border-green-500 dark:border-[#2b2b2b] dark:bg-[#050505] dark:text-white dark:focus:border-[#deff9a]/70"
+                        className="min-h-9 w-full min-w-[72px] rounded-lg border border-gray-300 bg-white px-3 text-sm text-black outline-none transition focus:border-green-500 dark:border-[#2b2b2b] dark:bg-[#050505] dark:text-white dark:focus:border-[#deff9a]/70"
                         disabled={pending}
                         min="0.01"
                         name="amount"

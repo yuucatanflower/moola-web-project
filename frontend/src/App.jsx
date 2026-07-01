@@ -372,7 +372,7 @@ function App() {
   return (
     <div className="animate-aurora min-h-screen bg-[radial-gradient(circle_at_22%_10%,rgba(34,197,94,0.10),transparent_28rem),radial-gradient(circle_at_82%_82%,rgba(132,204,22,0.08),transparent_30rem),linear-gradient(145deg,#ffffff_0%,#f3fbf4_48%,#ffffff_100%)] p-[clamp(18px,4vw,48px)] font-sans text-black transition-colors dark:bg-[radial-gradient(circle_at_22%_10%,rgba(126,255,175,0.18),transparent_28rem),radial-gradient(circle_at_82%_82%,rgba(222,255,154,0.10),transparent_30rem),linear-gradient(145deg,#020302_0%,#071108_48%,#020302_100%)] dark:text-[#daffde]">
       {session ? (
-        <div className="mx-auto flex w-full max-w-[1400px] flex-col items-center">
+        <div className="mx-auto flex w-full max-w-[1800px] flex-col items-center">
           <nav className="mb-6 flex w-full items-center self-start">
             <div className="flex flex-wrap gap-1.5 rounded-2xl border border-gray-200 bg-white/80 p-1.5 shadow-sm backdrop-blur-md transition-colors dark:border-[#1f2421] dark:bg-[#121614]/90">
               {NAV_TABS.map(({ key, label, icon }) => {
