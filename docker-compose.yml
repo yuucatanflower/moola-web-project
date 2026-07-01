@@ -1,0 +1,47 @@
+services:
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: moola
+      MYSQL_USER: moola
+      MYSQL_PASSWORD: ${DB_PASSWORD:-moola}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-moola_root}
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-moola_root}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    environment:
+      DB_URL: jdbc:mysql://mysql:3306/moola?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      DB_USERNAME: moola
+      DB_PASSWORD: ${DB_PASSWORD:-moola}
+      # 64 random chars so HS256 signing works out of the box; jjwt requires
+      # a key of at least 256 bits. Override in .env for anything beyond local dev.
+      JWT_SECRET: ${JWT_SECRET:-OMTfucF8SWs38gzvJEEzUUnadxc4EsicBemPjpmBRHq5fds-mtAyllLlvI7DYdRM}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-900000}
+      GROQ_KEY: ${GROQ_KEY:-}
+      GROQ_URL: ${GROQ_URL:-https://api.groq.com/openai/v1/chat/completions}
+      FRANKFURTER_URL: ${FRANKFURTER_URL:-https://api.frankfurter.dev/v2}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "8081:8081"
+
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "5173:80"
+
+volumes:
+  mysql-data:
