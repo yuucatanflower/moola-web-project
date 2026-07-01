@@ -11,13 +11,13 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.security.Principal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin(origins = "*")
 // Handles register, login, and user profile updates
 public class AuthController {
 
@@ -83,15 +83,10 @@ public class AuthController {
     }
 
     @PutMapping("/profile")
-    public ResponseEntity<Map<String, Object>> updateProfile(@RequestBody Map<String, Object> body) {
-        // extract the original username to find the correct database record
-        String currentUsername = (String) body.get("currentUsername");
-        if (currentUsername == null || currentUsername.trim().isEmpty()) {
-            throw new RuntimeException("Current username is required");
-        }
-
-        // fetch user using the old username
-        User user = userRepository.findByUsername(currentUsername.trim())
+    public ResponseEntity<Map<String, Object>> updateProfile(@RequestBody Map<String, Object> body, Principal principal) {
+        // derive the target user from the authenticated jwt, never from client input,
+        // otherwise any caller could edit another user's profile by supplying their username
+        User user = userRepository.findByUsername(principal.getName())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         // apply the new username if it was changed
