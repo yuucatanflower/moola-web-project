@@ -1,6 +1,7 @@
 package com.moola.backend.security;
 
 import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -45,11 +46,14 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             try {
                 // safely attempt to extract the username
                 username = jwtUtils.getUsernameFromToken(jwtToken);
-            } catch (IllegalArgumentException e) {
-                logger.warn("Unable to get JWT token: {}", e.getMessage());
             } catch (ExpiredJwtException e) {
                 // catch expired tokens cleanly
                 logger.debug("JWT token has expired for this request.");
+            } catch (JwtException | IllegalArgumentException e) {
+                // covers malformed tokens, signature mismatches (e.g. after a JWT_SECRET
+                // rotation), and null/blank tokens -- treat as an anonymous request instead
+                // of letting the exception crash the filter chain
+                logger.warn("Rejected invalid JWT: {}", e.getMessage());
             }
         }
 
