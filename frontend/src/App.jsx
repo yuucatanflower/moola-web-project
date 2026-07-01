@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import AuthPanel from "./components/auth/AuthPanel";
 import Dashboard from "./components/dashboard/Dashboard";
 import Home from "./components/dashboard/Home";
+import SavingsJars from "./components/dashboard/SavingsJars";
 import Settings from "./components/dashboard/Settings";
 import { EMPTY_AUTH_FORM } from "./constants/auth";
 import {
@@ -311,6 +312,8 @@ function App() {
             transactionsState={transactionsState}
           />
         );
+      case "jars":
+        return <SavingsJars session={session} onBalanceChange={updateSessionBalance} />;
       case "settings":
         return (
           <Settings
@@ -324,44 +327,39 @@ function App() {
     }
   };
 
+  const NAV_TABS = [
+    { key: "home", label: "Home", icon: "💸" },
+    { key: "dashboard", label: "Dashboard", icon: "📊" },
+    { key: "jars", label: "Jars", icon: "🏺" },
+    { key: "settings", label: "Settings", icon: "⚙️" },
+  ];
+
   return (
     <div className="grid min-h-screen place-items-center bg-[radial-gradient(circle_at_22%_10%,rgba(34,197,94,0.10),transparent_28rem),radial-gradient(circle_at_82%_82%,rgba(132,204,22,0.08),transparent_30rem),linear-gradient(145deg,#ffffff_0%,#f3fbf4_48%,#ffffff_100%)] p-[clamp(18px,4vw,48px)] font-sans text-black transition-colors dark:bg-[radial-gradient(circle_at_22%_10%,rgba(126,255,175,0.18),transparent_28rem),radial-gradient(circle_at_82%_82%,rgba(222,255,154,0.10),transparent_30rem),linear-gradient(145deg,#020302_0%,#071108_48%,#020302_100%)] dark:text-[#daffde]">
       {session ? (
         <div className="flex w-full flex-col items-center">
-          <nav className="mb-6 flex w-full gap-6 self-start border-b border-gray-200 px-4 pb-2 transition-colors dark:border-[#1a1a1a]">
-            <button
-              className={`flex items-center gap-2 pb-2 text-lg font-bold transition-colors duration-150 ${
-                activeTab === "home"
-                  ? "border-b-2 border-green-500 text-black dark:border-[#DEFF9A] dark:text-white"
-                  : "text-gray-500 hover:text-black dark:hover:text-white"
-              }`}
-              onClick={() => setActiveTab("home")}
-              type="button"
-            >
-              Home
-            </button>
-            <button
-              className={`flex items-center gap-2 pb-2 text-lg font-bold transition-colors duration-150 ${
-                activeTab === "dashboard"
-                  ? "border-b-2 border-green-500 text-black dark:border-[#DEFF9A] dark:text-white"
-                  : "text-gray-500 hover:text-black dark:hover:text-white"
-              }`}
-              onClick={() => setActiveTab("dashboard")}
-              type="button"
-            >
-              Dashboard
-            </button>
-            <button
-              className={`flex items-center gap-2 pb-2 text-lg font-bold transition-colors duration-150 ${
-                activeTab === "settings"
-                  ? "border-b-2 border-green-500 text-black dark:border-[#DEFF9A] dark:text-white"
-                  : "text-gray-500 hover:text-black dark:hover:text-white"
-              }`}
-              onClick={() => setActiveTab("settings")}
-              type="button"
-            >
-              Settings
-            </button>
+          <nav className="mb-6 flex w-full items-center self-start">
+            <div className="flex flex-wrap gap-1.5 rounded-2xl border border-gray-200 bg-white/80 p-1.5 shadow-sm backdrop-blur-md transition-colors dark:border-[#1f2421] dark:bg-[#121614]/90">
+              {NAV_TABS.map(({ key, label, icon }) => {
+                const isActive = activeTab === key;
+
+                return (
+                  <button
+                    key={key}
+                    className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-extrabold uppercase tracking-wide transition-all duration-200 ${
+                      isActive
+                        ? "bg-[#DEFF9A] text-black shadow-[0_4px_20px_rgba(222,255,154,0.35)]"
+                        : "text-gray-500 hover:bg-gray-100 hover:text-black dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white"
+                    }`}
+                    onClick={() => setActiveTab(key)}
+                    type="button"
+                  >
+                    <span className="text-base leading-none">{icon}</span>
+                    <span className="max-sm:hidden">{label}</span>
+                  </button>
+                );
+              })}
+            </div>
           </nav>
 
           <div className="w-full">
