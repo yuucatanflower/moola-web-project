@@ -1,5 +1,6 @@
 package com.moola.backend.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -26,6 +27,7 @@ public class User {
     @Column(unique = true, nullable = false)
     private String username;
 
+    @JsonIgnore
     @Column(nullable = false)
     private String password;
 
