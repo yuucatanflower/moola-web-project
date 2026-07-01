@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { deleteUser, fetchUsers, updateUser } from "../../services/api";
 
-function AdminPanel() {
-  const [password, setPassword] = useState("");
-  const [authorized, setAuthorized] = useState(false);
+function AdminPanel({ session }) {
   const [users, setUsers] = useState([]);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  const isAdmin = session?.user?.role === "ADMIN";
 
   useEffect(() => {
     const isDarkMode = localStorage.getItem('theme') === 'dark';
@@ -16,21 +17,24 @@ function AdminPanel() {
     }
   }, []);
 
-  const handleLogin = async () => {
-    try {
-      const data = await fetchUsers(password);
-
-      setUsers(data);
-      setAuthorized(true);
-      setError("");
-    } catch {
-      setError("Wrong admin password");
+  useEffect(() => {
+    if (!isAdmin) {
+      setLoading(false);
+      return;
     }
-  };
+
+    fetchUsers(session.accessToken)
+      .then((data) => {
+        setUsers(data);
+        setError("");
+      })
+      .catch(() => setError("Failed to load users"))
+      .finally(() => setLoading(false));
+  }, [isAdmin, session?.accessToken]);
 
   const handleDelete = async (id) => {
     try {
-      await deleteUser(password, id);
+      await deleteUser(session.accessToken, id);
 
       setUsers((currentUsers) =>
         currentUsers.filter((user) => user.id !== id)
@@ -48,7 +52,7 @@ function AdminPanel() {
     }
 
     try {
-      const updatedUser = await updateUser(password, user.id, newUsername);
+      const updatedUser = await updateUser(session.accessToken, user.id, newUsername);
 
       setUsers((currentUsers) =>
         currentUsers.map((u) => (u.id === user.id ? updatedUser : u))
@@ -58,8 +62,8 @@ function AdminPanel() {
     }
   };
 
-  // Render login view if not authorized
-  if (!authorized) {
+  // Block access outright for anyone who isn't logged in as an admin
+  if (!isAdmin) {
     return (
       <div className="w-full overflow-hidden rounded-3xl border border-gray-200 bg-gray-50 p-10 transition-colors dark:border-[#202020] dark:bg-[radial-gradient(circle_at_18%_5%,rgba(126,255,175,0.10),transparent_23rem),linear-gradient(145deg,rgba(12,22,13,0.96),rgba(0,0,0,0.94)_52%,rgba(6,14,7,0.96))]">
         <h1 className="mb-6 text-4xl font-extrabold text-black transition-colors dark:text-white">
@@ -74,24 +78,21 @@ function AdminPanel() {
           >
             🏠
           </button>
-          <input
-            className="rounded-xl border border-gray-300 bg-white p-3 text-black transition-colors dark:border-[#2b2b2b] dark:bg-black dark:text-white"
-            placeholder="Admin Password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
 
-          <button
-            className="rounded-xl bg-[#DEFF9A] p-3 font-bold text-black transition hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black"
-            onClick={handleLogin}
-            type="button"
-          >
-            Enter
-          </button>
-
-          {error && <p className="font-bold text-red-500 dark:text-red-400">{error}</p>}
+          <p className="font-bold text-red-500 dark:text-red-400">
+            {session
+              ? "This account does not have admin access."
+              : "You must be logged in with an admin account to view this page."}
+          </p>
         </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="w-full overflow-hidden rounded-3xl border border-gray-200 bg-gray-50 p-10 transition-colors dark:border-[#202020] dark:bg-[radial-gradient(circle_at_18%_5%,rgba(126,255,175,0.10),transparent_23rem),linear-gradient(145deg,rgba(12,22,13,0.96),rgba(0,0,0,0.94)_52%,rgba(6,14,7,0.96))]">
+        <p className="text-black transition-colors dark:text-white">Loading users…</p>
       </div>
     );
   }
@@ -112,6 +113,8 @@ function AdminPanel() {
           🏠
         </button>
       </div>
+
+      {error && <p className="mb-4 font-bold text-red-500 dark:text-red-400">{error}</p>}
 
       <div className="overflow-hidden rounded-2xl border border-gray-200 transition-colors dark:border-[#222]">
         <table className="w-full text-left">

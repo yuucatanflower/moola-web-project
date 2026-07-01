@@ -299,7 +299,7 @@ function App() {
   if (isAdminPage) {
     return (
       <div className="grid min-h-screen place-items-center bg-[radial-gradient(circle_at_22%_10%,rgba(34,197,94,0.10),transparent_28rem),radial-gradient(circle_at_82%_82%,rgba(132,204,22,0.08),transparent_30rem),linear-gradient(145deg,#ffffff_0%,#f3fbf4_48%,#ffffff_100%)] p-[clamp(18px,4vw,48px)] font-sans text-black transition-colors dark:bg-[radial-gradient(circle_at_22%_10%,rgba(126,255,175,0.18),transparent_28rem),radial-gradient(circle_at_82%_82%,rgba(222,255,154,0.10),transparent_30rem),linear-gradient(145deg,#020302_0%,#071108_48%,#020302_100%)] dark:text-[#daffde]">
-        <AdminPanel />
+        <AdminPanel session={session} />
       </div>
     );
   }

@@ -115,29 +115,29 @@ export const deleteTransaction = async (token, id) =>
         },
     });
 
-export const fetchUsers = async (adminPassword) =>
+export const fetchUsers = async (token) =>
     request("/admin/users", {
         method: "GET",
         headers: {
-            "X-ADMIN-PASSWORD": adminPassword,
+            Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
         },
     });
 
-export const deleteUser = async (adminPassword, userId) =>
+export const deleteUser = async (token, userId) =>
     request(`/admin/users/${userId}`, {
         method: "DELETE",
         headers: {
-            "X-ADMIN-PASSWORD": adminPassword,
+            Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
         },
     });
 
-export const updateUser = async (adminPassword, userId, username) =>
+export const updateUser = async (token, userId, username) =>
     request(`/admin/users/${userId}`, {
         method: "PATCH",
         headers: {
-            "X-ADMIN-PASSWORD": adminPassword,
+            Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
         },
         body: JSON.stringify({
