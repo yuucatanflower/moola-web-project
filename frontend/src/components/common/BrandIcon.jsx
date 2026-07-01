@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 
 const BrandIcon = ({ name }) => {
   const [hasError, setHasError] = useState(false);

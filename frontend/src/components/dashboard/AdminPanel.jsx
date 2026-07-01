@@ -18,8 +18,9 @@ function AdminPanel({ session }) {
   }, []);
 
   useEffect(() => {
+    // the !isAdmin branch below already renders before `loading` is read, so
+    // there's nothing to reset here — just skip fetching
     if (!isAdmin) {
-      setLoading(false);
       return;
     }
 
