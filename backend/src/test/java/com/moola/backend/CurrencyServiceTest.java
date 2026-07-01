@@ -7,6 +7,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestTemplate;
 
@@ -15,12 +18,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-// tests currency conversion without calling the real frankfurter api
+// tests exchange rate lookups without calling the real frankfurter api
 public class CurrencyServiceTest {
 
     @Mock
@@ -37,36 +41,33 @@ public class CurrencyServiceTest {
     }
 
     @Test
-    void convertCurrency_WhenSameCurrency_ShouldReturnOriginalAmount() {
-        BigDecimal amount = new BigDecimal("100.00");
-        BigDecimal result = currencyService.convertCurrency("USD", "USD", amount);
-        assertEquals(amount, result);
+    void getExchangeRate_WhenSameCurrency_ShouldReturnOne() {
+        BigDecimal result = currencyService.getExchangeRate("USD", "USD");
+        assertEquals(BigDecimal.ONE, result);
     }
 
     @Test
-    void convertCurrency_WithValidApiResponse_ShouldReturnConvertedAmount() {
-        BigDecimal originalAmount = new BigDecimal("100.00");
-
+    void getExchangeRate_WithValidApiResponse_ShouldReturnRate() {
         // fake the frankfurter response with a sample rate
         Map<String, Object> mockResponse = new HashMap<>();
         mockResponse.put("rate", 1.08);
 
-        when(restTemplate.getForObject(anyString(), eq(Map.class))).thenReturn(mockResponse);
+        when(restTemplate.exchange(anyString(), eq(HttpMethod.GET), any(HttpEntity.class), eq(Map.class)))
+                .thenReturn(new ResponseEntity<>(mockResponse, org.springframework.http.HttpStatus.OK));
 
-        BigDecimal result = currencyService.convertCurrency("EUR", "USD", originalAmount);
+        BigDecimal result = currencyService.getExchangeRate("EUR", "USD");
 
-        assertEquals(new BigDecimal("108.00"), result);
+        assertEquals(new BigDecimal("1.08"), result);
     }
 
     @Test
-    void convertCurrency_WhenApiFails_ShouldFallbackToOriginalAmount() {
-        BigDecimal originalAmount = new BigDecimal("100.00");
-
+    void getExchangeRate_WhenApiFails_ShouldFallbackToOne() {
         // pretend the external api is down
-        when(restTemplate.getForObject(anyString(), eq(Map.class))).thenThrow(new RuntimeException("API Down"));
+        when(restTemplate.exchange(anyString(), eq(HttpMethod.GET), any(HttpEntity.class), eq(Map.class)))
+                .thenThrow(new RuntimeException("API Down"));
 
-        BigDecimal result = currencyService.convertCurrency("EUR", "USD", originalAmount);
+        BigDecimal result = currencyService.getExchangeRate("EUR", "USD");
 
-        assertEquals(originalAmount, result);
+        assertEquals(BigDecimal.ONE, result);
     }
 }

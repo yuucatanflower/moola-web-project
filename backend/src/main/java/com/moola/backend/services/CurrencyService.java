@@ -1,5 +1,7 @@
 package com.moola.backend.services;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -14,6 +16,8 @@ import java.util.Map;
 @Service
 // Talks to the external Frankfurter v2 currency API and returns the conversion rate
 public class CurrencyService {
+
+    private static final Logger logger = LoggerFactory.getLogger(CurrencyService.class);
 
     @Value("${FRANKFURTER_URL:https://api.frankfurter.dev/v2}")
     private String apiUrl;
@@ -36,11 +40,11 @@ public class CurrencyService {
             Map<String, Object> response = responseEntity.getBody();
 
             if (response != null && response.containsKey("rate")) {
-                System.out.println("Successfully fetched live v2 rate: " + from + " -> " + to);
+                logger.debug("Fetched live rate: {} -> {}", from, to);
                 return new BigDecimal(response.get("rate").toString());
             }
         } catch (Exception e) {
-            System.err.println("Frankfurter v2 API Failed: " + e.getMessage());
+            logger.warn("Frankfurter API call failed for {} -> {}: {}", from, to, e.getMessage());
         }
 
         // Return 1.0 multiplier if the API request fails so the app doesn't crash
