@@ -1,77 +1,123 @@
-# moola-web-project
+# Moola
 
-test api requests:
-http://localhost:8081/swagger-ui/index.html#/
-(run server and try different requests)
+A personal finance tracker with a twist: instead of just logging transactions, Moola translates
+spending into hours of work, tags purchases by *how you felt* about them, and has an AI advisor
+that will either roast your coffee habit or talk you down from it, your choice.
 
-## Project Vision
-
-The frontend and backend logic are built around several core behavioral features:
-
-* **AI Financial Advisor**: A realistic persona that analyzes spending history to offer unfiltered advice on financial habits.
-* **Time/Money Translator**: Calculates the true cost of a purchase by dividing the amount by the user's hourly wage to show cost in hours of work.
-* **Behavioral Tagging**: Transactions can be marked with Impulse Buy or Regret tags to generate reports on spending behavior.
-* **Safe-to-Spend**: A real-time calculation subtracting recurring bills and essential expenses from the balance to show available discretionary funds.
-* **Visual Categories**: Spending tracking using custom colors and descriptors for every category.
+**Stack:** Spring Boot 4 (Java 17) · React 19 + Vite · Tailwind CSS · MySQL · JWT auth
 
 ---
 
-## Technical Architecture
+## Features
 
-### Backend Component
-* **Framework**: Spring Boot 4.0.3 running on Java 17.
-* **Security**: Stateless JWT Authentication via Spring Security.
-* **Database**: MySQL hosted on Aiven.
-* **Documentation**: Swagger / OpenAPI 3.0 for endpoint testing and documentation.
-* **Utilities**: Lombok for automated code generation.
+- **Time/Money Translator** — every purchase can be shown as "X hours of your life" instead of a
+  currency amount, calculated from your hourly wage.
+- **Behavioral Tagging** — mark transactions as *Impulse Buy* or *Regret* to see patterns in how
+  you spend, not just what you spend.
+- **AI Financial Advisor** — sends your recent transaction history to an LLM (via Groq) and gets
+  back short, tone-adjustable feedback: brutally honest ("roast") or calm and encouraging ("zen").
+- **Safe-to-Spend** — a running balance that subtracts recurring bills so you know what's actually
+  free to spend today.
+- **Salary Shield** — a privacy toggle that hides absolute currency amounts and shows everything
+  in hours worked instead.
+- **Multi-currency** — log transactions in any currency; live conversion rates come from the
+  [Frankfurter API](https://frankfurter.dev), and switching your preferred currency retroactively
+  re-prices your wallet and transaction history.
+- **Custom categories** with per-user colors, resolved automatically by name or id.
+- **Admin panel** for user management, gated behind a real `ROLE_ADMIN` JWT claim.
 
-### Frontend Component
-* **Framework**: React using functional components and hooks.
-* **Styling**: Tailwind CSS for mobile-first, responsive design.
-* **Communication**: Axios with interceptors to automatically attach the JWT Authorization header to requests.
+## Tech stack
 
----
+| Layer     | Technology                                                                 |
+|-----------|-----------------------------------------------------------------------------|
+| Backend   | Spring Boot 4.0.3, Java 17, Spring Security, Spring Data JPA, MySQL         |
+| Auth      | Stateless JWT (io.jsonwebtoken), BCrypt password hashing, role-based access |
+| Frontend  | React 19, Vite, Tailwind CSS 4                                              |
+| External  | [Groq](https://groq.com) (AI advice), [Frankfurter](https://frankfurter.dev) (FX rates) |
+| Docs      | springdoc-openapi (Swagger UI)                                             |
 
-## Security Implementation
+## Architecture
 
-> The system implements several layers of protection to ensure a secure environment:
+```
+frontend/   React SPA (Vite dev server proxies /api -> localhost:8081)
+backend/    Spring Boot REST API (stateless, JWT-secured, MySQL-backed)
+```
 
-* **JWT Integrity**: The backend validates token signatures to ensure authenticity; mismatched or tampered tokens are rejected with 401/403 errors.
-* **SQL Injection Prevention**: Database queries are parameterized through Spring Data JPA repositories.
-* **Input Validation**: Server-side validation ensures only properly formatted data, such as correct date strings and positive amounts, is persisted.
-* **SSRF Protection**: External API integrations use hardcoded base URLs to prevent the server from making unauthorized internal requests.
+The frontend never talks to MySQL, Groq, or Frankfurter directly — every external call is
+proxied through the backend, which holds the actual credentials.
 
----
+## Getting started
 
-## API Reference
+### Prerequisites
 
-All backend endpoints are hosted at http://localhost:8081.
+- JDK 17+
+- Maven (or use an IDE with a bundled Maven, e.g. IntelliJ)
+- Node.js 18+
+- A MySQL database (local, Docker, or a managed instance like Aiven/PlanetScale)
 
-### Authentication
-* **POST /api/auth/register**: Create a new user profile.
-* **POST /api/auth/login**: Returns an accessToken for subsequent authenticated requests.
+### Backend
 
-### Core Resources
-* **GET /api/transactions**: Retrieve the full transaction history for the user.
-* **POST /api/transactions**: Create a new transaction linked to a specific category.
-* **PUT /api/transactions/{id}**: Update transaction details such as amount or date.
-* **PATCH /api/transactions/{id}**: Used for toggling behavioral tags like Regret or Impulse Buy.
-* **GET /api/categories**: Retrieve personalized spending categories.
+```bash
+cd backend
+cp .env.example .env   # fill in DB credentials, JWT secret, and API keys
+mvn spring-boot:run
+```
 
-### External Features
-* **GET /api/features/advice**: Triggers the AI Advisor to generate behavioral feedback.
-* **GET /api/features/convert**: Real-time currency conversion using the Frankfurter API.
+`.env` is loaded automatically via `spring-dotenv` — see [.env.example](backend/.env.example) for
+every variable the app reads. At minimum you need a MySQL connection string and a `JWT_SECRET`;
+`GROQ_KEY` is only required if you want the AI advisor to return real responses (it degrades
+gracefully to a placeholder message without one).
 
----
+The backend starts on `http://localhost:8081`. Interactive API docs are at
+[`/swagger-ui/index.html`](http://localhost:8081/swagger-ui/index.html).
 
-## Setup Instructions
+Run the test suite with:
 
-> Follow these steps to get the environment running:
+```bash
+mvn test
+```
 
-1. **Clone the Repository**: Ensure Maven and JDK 17 are installed on the local machine.
-2. **Environment Variables**: Configure the JWT_SECRET and Aiven MySQL credentials in the application configuration.
-3. **Build the Project**: Run mvn clean install to resolve dependencies and compile the source code.
-4. **Run the Backend**: Start the Spring Boot application through the IDE or terminal.
-5. **Test the API**: Navigate to http://localhost:8081/swagger-ui/index.html to explore and test the available endpoints.
+### Frontend
 
----
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+The dev server runs on `http://localhost:5173` and proxies `/api/*` to the backend, so no CORS
+configuration is needed locally.
+
+### Admin access
+
+Registration always creates a plain `USER` account — there's no self-service way to become an
+admin, by design. To reach `/admin`, manually set a user's `role` column to `ADMIN` in the
+database, then log in normally through the app; the admin panel checks the role embedded in your
+JWT.
+
+## Security notes
+
+- Passwords are hashed with BCrypt; JWTs are short-lived and signed with HS256.
+- Every resource endpoint resolves "who am I" from the authenticated JWT's subject — never from a
+  client-supplied id or username in the request body.
+- `/api/admin/**` requires a `ROLE_ADMIN` authority derived from the JWT, not a shared password.
+- External API failures (Frankfurter, Groq) are logged server-side and degrade to safe fallback
+  behavior instead of surfacing raw exception details to the client.
+
+## Project structure
+
+```
+backend/src/main/java/com/moola/backend/
+  controllers/   REST endpoints
+  services/      business logic (wallet math, currency conversion, AI prompts)
+  models/        JPA entities
+  repositories/  Spring Data repositories
+  security/      JWT filter, JWT utils, global exception handling
+  config/        Spring Security / CORS configuration
+
+frontend/src/
+  components/    auth, dashboard, and shared UI components
+  services/      fetch-based API client
+  utils/         session persistence helpers
+  constants/     shared constants
+```
