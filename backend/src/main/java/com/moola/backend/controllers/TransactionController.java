@@ -15,7 +15,6 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/transactions")
-@CrossOrigin(origins = "*")
 // main transaction api managing resource methods and ai financial auditing
 public class TransactionController {
     private final TransactionService transactionService;

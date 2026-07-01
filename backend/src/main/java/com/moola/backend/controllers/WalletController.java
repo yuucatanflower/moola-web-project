@@ -13,7 +13,6 @@ import java.security.Principal;
 
 @RestController
 @RequestMapping("/api/wallet")
-@CrossOrigin(origins = "*")
 // gives the logged-in user their wallet balance and currency
 public class WalletController {
 

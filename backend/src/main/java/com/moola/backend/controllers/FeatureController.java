@@ -15,7 +15,6 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/features")
-@CrossOrigin(origins = "*")
 // handles specific application features such as dynamic currency conversion and automated ai insights
 public class FeatureController {
 
