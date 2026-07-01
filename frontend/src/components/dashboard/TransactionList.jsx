@@ -218,7 +218,7 @@ function TransactionTable({ onDeleteTransaction, onUpdateTransaction, transactio
                   {editing ? (
                     <>
                       <input
-                        className="min-h-9 rounded-lg border border-gray-300 bg-white px-3 text-sm text-black outline-none transition focus:border-green-500 dark:border-[#2b2b2b] dark:bg-[#050505] dark:text-white dark:focus:border-[#deff9a]/70"
+                        className="min-h-9 w-full min-w-0 rounded-lg border border-gray-300 bg-white px-3 text-sm text-black outline-none transition focus:border-green-500 dark:border-[#2b2b2b] dark:bg-[#050505] dark:text-white dark:focus:border-[#deff9a]/70"
                         disabled={pending}
                         min="0.01"
                         name="amount"
@@ -228,7 +228,7 @@ function TransactionTable({ onDeleteTransaction, onUpdateTransaction, transactio
                         value={editForm.amount}
                       />
                       <input
-                        className="min-h-9 rounded-lg border border-gray-300 bg-white px-3 text-sm text-black outline-none transition focus:border-green-500 dark:border-[#2b2b2b] dark:bg-[#050505] dark:text-white dark:focus:border-[#deff9a]/70"
+                        className="min-h-9 w-full min-w-0 rounded-lg border border-gray-300 bg-white px-3 text-sm text-black outline-none transition focus:border-green-500 dark:border-[#2b2b2b] dark:bg-[#050505] dark:text-white dark:focus:border-[#deff9a]/70"
                         disabled={pending}
                         name="description"
                         onChange={handleEditChange}
