@@ -9,7 +9,7 @@ import {
   withdrawFromSavingsJar,
 } from "../../services/api";
 
-const EMOJI_CHOICES = ["🏺", "✈️", "🏠", "🚗", "🎓", "🎮", "💍", "🎁", "🩺", "🐷"];
+const EMOJI_CHOICES = ["🫙", "✈️", "🏠", "🚗", "🎓", "🎮", "💍", "🎁", "🩺", "🐷"];
 const COLOR_CHOICES = ["#DEFF9A", "#8fe9ff", "#ff6b6b", "#ffc978", "#c9a6ff"];
 
 function CreateJarForm({ onCreate, onCancel, isSubmitting, error }) {
@@ -403,7 +403,7 @@ function SavingsJars({ session, onBalanceChange }) {
       ) : (
         !showCreateForm && (
           <div className="rounded-[26px] border border-dashed border-gray-300 bg-gray-50 px-8 py-16 text-center transition-colors dark:border-[#2b2b2b] dark:bg-black/40">
-            <p className="text-5xl">🏺</p>
+            <p className="text-5xl">🫙</p>
             <p className="mt-4 text-lg font-bold text-black transition-colors dark:text-white">
               No jars yet
             </p>

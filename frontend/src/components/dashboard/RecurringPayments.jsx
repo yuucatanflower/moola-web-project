@@ -1,4 +1,4 @@
-import { formatAmount } from "../../utils/formatters";
+import { formatAmount, ordinal } from "../../utils/formatters";
 
 function RecurringPayments({
   transactions,
@@ -36,7 +36,7 @@ function RecurringPayments({
                 <span className="text-lg text-gray-300 transition-colors dark:text-[#daffde]/40">•</span>
 
                 <span className="text-lg font-semibold text-blue-600 transition-colors dark:text-[#8fe9ff]">
-                  Every {new Date(payment.date).getDate()}th day
+                  Every {ordinal(new Date(payment.date).getDate())} day
                 </span>
               </div>
 

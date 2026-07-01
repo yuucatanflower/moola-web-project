@@ -374,7 +374,7 @@ function App() {
   const NAV_TABS = [
     { key: "home", label: "Home", icon: "💸" },
     { key: "dashboard", label: "Dashboard", icon: "📊" },
-    { key: "jars", label: "Jars", icon: "🏺" },
+    { key: "jars", label: "Jars", icon: "🫙" },
     { key: "settings", label: "Settings", icon: "⚙️" },
   ];
 
