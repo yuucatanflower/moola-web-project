@@ -53,8 +53,8 @@ proxied through the backend, which holds the actual credentials.
 
 ### Run with Docker (fastest)
 
-The whole stack — MySQL, backend, frontend — comes up with one command and needs nothing installed
-beyond Docker itself:
+Requires only [Docker](https://www.docker.com/products/docker-desktop/) (with Compose v2, bundled
+by default). The whole stack — MySQL, backend, frontend — comes up with one command:
 
 ```bash
 docker compose up --build
@@ -66,7 +66,17 @@ docker compose up --build
 No `.env` file is required — sensible local-dev defaults are baked into `docker-compose.yml`
 (including a MySQL database and a JWT secret long enough for HS256). If you want real AI advice
 from Groq, copy [.env.example](.env.example) to `.env` and set `GROQ_KEY`; everything else works
-without it. Data persists in a Docker volume across restarts; `docker compose down -v` wipes it.
+without it.
+
+Other useful commands:
+
+```bash
+docker compose up -d          # same, but detached (runs in the background)
+docker compose logs -f backend
+docker compose up --build     # rebuild after pulling code changes
+docker compose down           # stop everything, keep the database
+docker compose down -v        # stop everything and wipe the database
+```
 
 ### Run natively (for development)
 
@@ -142,4 +152,9 @@ frontend/src/
   services/      fetch-based API client
   utils/         session persistence helpers
   constants/     shared constants
+
+docker-compose.yml    wires mysql + backend + frontend together
+backend/Dockerfile    Maven build -> slim JRE runtime
+frontend/Dockerfile   Vite build -> nginx static serve
+frontend/nginx.conf   reverse-proxies /api/* to the backend container
 ```
