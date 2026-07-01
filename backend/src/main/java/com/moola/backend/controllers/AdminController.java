@@ -20,42 +20,24 @@ public class AdminController {
 
     }
 
+    // authorization for this whole controller is enforced by SecurityConfig,
+    // which requires ROLE_ADMIN for every /api/admin/** request
+
     @GetMapping("/users")
-    public List<User> getUsers(
-            @RequestHeader("X-ADMIN-PASSWORD") String password
-    ) {
-
-        if (!"admin123".equals(password)) {
-            throw new RuntimeException("Access denied");
-        }
-
+    public List<User> getUsers() {
         return adminService.getAllUsers();
     }
 
     @PatchMapping("/users/{id}")
     public User updateUser(
             @PathVariable UUID id,
-            @RequestBody Map<String, String> body,
-            @RequestHeader("X-ADMIN-PASSWORD") String password
+            @RequestBody Map<String, String> body
     ) {
-
-        if (!"admin123".equals(password)) {
-            throw new RuntimeException("Access denied");
-        }
-
         return adminService.updateUsername(id, body.get("username"));
     }
 
     @DeleteMapping("/users/{id}")
-    public void deleteUser(
-            @PathVariable UUID id,
-            @RequestHeader("X-ADMIN-PASSWORD") String password
-    ) {
-
-        if (!"admin123".equals(password)) {
-            throw new RuntimeException("Access denied");
-        }
-
+    public void deleteUser(@PathVariable UUID id) {
         adminService.deleteUser(id);
     }
 }

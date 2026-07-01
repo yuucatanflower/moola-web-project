@@ -45,7 +45,7 @@ public class AuthService {
         }
 
         // generate and return the jwt token
-        return jwtUtils.generateToken(username);
+        return jwtUtils.generateToken(username, user.getRole());
     }
 
     // creates a new user account
@@ -57,6 +57,9 @@ public class AuthService {
 
         // encrypt the password before saving to the database
         user.setPassword(passwordEncoder.encode(user.getPassword()));
+
+        // self-service registration must never grant anything but a plain user role
+        user.setRole("USER");
 
         // save the user
         User savedUser = userRepository.save(user);

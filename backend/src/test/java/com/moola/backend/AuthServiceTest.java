@@ -13,6 +13,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.util.Optional;
@@ -73,7 +74,7 @@ public class AuthServiceTest {
 
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
         when(passwordEncoder.matches("rawPassword", "hashedPassword")).thenReturn(true);
-        when(jwtUtils.generateToken("testuser")).thenReturn("mocked.jwt.token");
+        when(jwtUtils.generateToken("testuser", "ADMIN")).thenReturn("mocked.jwt.token");
 
         String token = authService.login("testuser", "rawPassword");
 
@@ -87,22 +88,22 @@ public class AuthServiceTest {
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
         when(passwordEncoder.matches("wrongPassword", "hashedPassword")).thenReturn(false);
 
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
             authService.login("testuser", "wrongPassword");
         });
 
-        assertEquals("Invalid password", exception.getMessage());
+        assertEquals("Invalid username or password", exception.getReason());
     }
 
     @Test
     void login_WithUnknownUser_ShouldThrowException() {
         when(userRepository.findByUsername("unknown")).thenReturn(Optional.empty());
 
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
             authService.login("unknown", "password");
         });
 
-        assertEquals("User not found", exception.getMessage());
+        assertEquals("Invalid username or password", exception.getReason());
     }
 
     @Test
