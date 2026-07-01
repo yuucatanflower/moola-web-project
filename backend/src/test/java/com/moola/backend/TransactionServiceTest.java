@@ -97,7 +97,7 @@ public class TransactionServiceTest {
         // mock dependencies introduced during wallet/currency service upgrades
         when(categoryRepository.findByIdAndUserId(categoryId, userId)).thenReturn(Optional.of(testCategory));
         when(walletRepository.findByUserId(userId)).thenReturn(Optional.of(testWallet));
-        when(currencyService.convertCurrency(any(), any(), any())).thenReturn(new BigDecimal("50.00"));
+        when(currencyService.getExchangeRate(any(), any())).thenReturn(BigDecimal.ONE);
         when(transactionRepository.save(any(Transaction.class))).thenReturn(testTransaction);
 
         Transaction newTx = new Transaction();
@@ -159,7 +159,7 @@ public class TransactionServiceTest {
         testWallet.setBalance(startingBalance);
 
         when(walletRepository.findByUserId(userId)).thenReturn(Optional.of(testWallet));
-        when(currencyService.convertCurrency("EUR", "EUR", incomeAmount)).thenReturn(incomeAmount);
+        when(currencyService.getExchangeRate("EUR", "EUR")).thenReturn(BigDecimal.ONE);
         when(transactionRepository.save(any(Transaction.class))).thenReturn(testTransaction);
 
         Transaction incomeTx = new Transaction();
@@ -181,12 +181,11 @@ public class TransactionServiceTest {
         // arrange
         BigDecimal startingBalance = new BigDecimal("1000.00");
         BigDecimal usdAmount = new BigDecimal("100.00");
-        BigDecimal convertedEurAmount = new BigDecimal("90.00"); // simulated fx conversion rate (100 usd = 90 eur)
         testWallet.setBalance(startingBalance);
 
         when(walletRepository.findByUserId(userId)).thenReturn(Optional.of(testWallet));
-        // mock currencyservice to return the converted eur amount when fed usd input parameters
-        when(currencyService.convertCurrency("USD", "EUR", usdAmount)).thenReturn(convertedEurAmount);
+        // mock currencyservice to return the usd->eur rate that produces convertedEurAmount
+        when(currencyService.getExchangeRate("USD", "EUR")).thenReturn(new BigDecimal("0.90"));
         when(transactionRepository.save(any(Transaction.class))).thenReturn(testTransaction);
 
         Transaction foreignTx = new Transaction();
@@ -200,7 +199,7 @@ public class TransactionServiceTest {
         // assert
         // starting 100000 - converted expense 9000 = 91000
         assertEquals(new BigDecimal("910.00"), testWallet.getBalance());
-        verify(currencyService, times(1)).convertCurrency("USD", "EUR", usdAmount);
+        verify(currencyService, times(1)).getExchangeRate("USD", "EUR");
         verify(walletRepository, times(1)).save(testWallet);
     }
 }
