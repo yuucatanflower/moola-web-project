@@ -23,6 +23,9 @@ that will either roast your coffee habit or talk you down from it, your choice.
 - **Multi-currency** — log transactions in any currency; live conversion rates come from the
   [Frankfurter API](https://frankfurter.dev), and switching your preferred currency retroactively
   re-prices your wallet and transaction history.
+- **Savings Jars** — set money aside for specific goals (a laptop, a trip, an emergency fund).
+  Depositing into a jar actually moves money out of your spendable balance, like Monzo pots; each
+  jar tracks progress toward an optional target and refunds itself back to your balance if deleted.
 - **Custom categories** with per-user colors, resolved automatically by name or id.
 - **Admin panel** for user management, gated behind a real `ROLE_ADMIN` JWT claim.
 
