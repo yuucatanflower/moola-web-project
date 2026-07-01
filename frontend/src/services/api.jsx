@@ -1,5 +1,13 @@
 const API_BASE_URL = "/api";
 
+// set by App on mount so any authenticated request that comes back 401
+// (expired/invalid token) can trigger an immediate logout, not just the
+// proactive timer based on the token's own exp claim
+let unauthorizedHandler = () => {};
+export const setUnauthorizedHandler = (handler) => {
+    unauthorizedHandler = handler;
+};
+
 const readResponseBody = async (response) => {
     const contentType = response.headers.get("content-type");
 
@@ -13,6 +21,10 @@ const readResponseBody = async (response) => {
 const request = async (path, options) => {
     const response = await fetch(`${API_BASE_URL}${path}`, options);
     const body = await readResponseBody(response);
+
+    if (response.status === 401 && options?.headers?.Authorization) {
+        unauthorizedHandler();
+    }
 
     if (!response.ok) {
         const jsonMessage =

@@ -10,10 +10,12 @@ import {
   fetchTransactions,
   loginUser,
   registerUser,
+  setUnauthorizedHandler,
   updateTransaction,
   updateUserProfile,
 } from "./services/api";
 import { buildSession, clearSession, readStoredSession, saveSession } from "./utils/session";
+import { getTokenExpiryMs } from "./utils/jwt";
 import "./index.css";
 import AdminPanel from "./components/dashboard/AdminPanel";
 
@@ -152,16 +154,49 @@ function App() {
       }
     };
 
-  const handleLogout = () => {
+  const performLogout = (message) => {
     clearSession();
     setSession(null);
     setTransactions([]);
-    setAuthMessage({
-      type: "success",
-      text: "You are logged out on this browser.",
-    });
+    setAuthMessage(message);
     setActiveTab("home");
   };
+
+  const handleLogout = () => {
+    performLogout({ type: "success", text: "You are logged out on this browser." });
+  };
+
+  // Auto-logout safety net: if any authenticated request comes back 401 (token
+  // expired, invalid, or revoked server-side), log out immediately instead of
+  // leaving the user staring at silently-failing requests.
+  useEffect(() => {
+    setUnauthorizedHandler(() => {
+      performLogout({ type: "error", text: "Your session expired. Please log in again." });
+    });
+  }, []);
+
+  // Auto-logout on schedule: read the JWT's own exp claim and log out exactly
+  // when it lapses, rather than waiting for the next failed request to notice.
+  useEffect(() => {
+    if (!session?.accessToken) {
+      return;
+    }
+
+    const expiryMs = getTokenExpiryMs(session.accessToken);
+    if (expiryMs == null) {
+      return;
+    }
+
+    // clamp to 0 so an already-expired token logs out on the next tick instead
+    // of synchronously during the effect
+    const msUntilExpiry = Math.max(0, expiryMs - Date.now());
+
+    const timeoutId = setTimeout(() => {
+      performLogout({ type: "error", text: "Your session expired. Please log in again." });
+    }, msUntilExpiry);
+
+    return () => clearTimeout(timeoutId);
+  }, [session?.accessToken]);
 
   // Profile patch handler to update stateful session details locally.
   // Errors are intentionally left to propagate so Settings can show them to the user.
