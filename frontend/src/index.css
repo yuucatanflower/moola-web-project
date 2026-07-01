@@ -16,4 +16,41 @@ body,
 
 body {
   margin: 0;
+  position: relative;
+}
+
+#root {
+  position: relative;
+  z-index: 1;
+}
+
+/* fine film-grain texture over the whole app, fixed so it doesn't scroll away */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  opacity: 0.05;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/rect%3E%3C/svg%3E");
+}
+
+/* slow-drifting gradient background, shared by any element painting one of
+   the app's multi-layer radial/linear gradients (see App.jsx, Home.jsx) */
+@keyframes aurora-flow {
+  0% {
+    background-position: 30% 15%, 75% 85%, 50% 50%;
+  }
+  50% {
+    background-position: 40% 30%, 65% 70%, 50% 50%;
+  }
+  100% {
+    background-position: 30% 15%, 75% 85%, 50% 50%;
+  }
+}
+
+.animate-aurora {
+  background-size: 160% 160%, 160% 160%, 100% 100%;
+  animation: aurora-flow 28s ease-in-out infinite;
 }
