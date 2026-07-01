@@ -51,14 +51,33 @@ proxied through the backend, which holds the actual credentials.
 
 ## Getting started
 
-### Prerequisites
+### Run with Docker (fastest)
+
+The whole stack — MySQL, backend, frontend — comes up with one command and needs nothing installed
+beyond Docker itself:
+
+```bash
+docker compose up --build
+```
+
+- Frontend: [http://localhost:5173](http://localhost:5173)
+- Backend: [http://localhost:8081](http://localhost:8081) (Swagger at `/swagger-ui/index.html`)
+
+No `.env` file is required — sensible local-dev defaults are baked into `docker-compose.yml`
+(including a MySQL database and a JWT secret long enough for HS256). If you want real AI advice
+from Groq, copy [.env.example](.env.example) to `.env` and set `GROQ_KEY`; everything else works
+without it. Data persists in a Docker volume across restarts; `docker compose down -v` wipes it.
+
+### Run natively (for development)
+
+#### Prerequisites
 
 - JDK 17+
 - Maven (or use an IDE with a bundled Maven, e.g. IntelliJ)
 - Node.js 18+
 - A MySQL database (local, Docker, or a managed instance like Aiven/PlanetScale)
 
-### Backend
+#### Backend
 
 ```bash
 cd backend
@@ -80,7 +99,7 @@ Run the test suite with:
 mvn test
 ```
 
-### Frontend
+#### Frontend
 
 ```bash
 cd frontend
