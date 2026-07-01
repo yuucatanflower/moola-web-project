@@ -59,7 +59,7 @@ function Dashboard({
           <TransactionList
             onDeleteTransaction={onDeleteTransaction}
             onUpdateTransaction={onUpdateTransaction}
-            transactions={transactions.filter((t) => !t.recurrent)}
+            transactions={transactions}
             transactionsState={transactionsState}
             currency={userCurrency}
             salaryShield={salaryShield}

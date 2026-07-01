@@ -212,7 +212,12 @@ function TransactionTable({ onDeleteTransaction, onUpdateTransaction, transactio
                   key={transaction.id}
                 >
                   <span>{formatTransactionDate(transaction.date)}</span>
-                  <span>{transaction.type || "Expense"}</span>
+                  <span className="flex items-center gap-1.5">
+                    {transaction.type || "Expense"}
+                    {transaction.recurrent && (
+                      <span title="Recurring" aria-label="Recurring">🔄</span>
+                    )}
+                  </span>
                   <span>{getTransactionCategory(transaction)}</span>
 
                   {editing ? (
