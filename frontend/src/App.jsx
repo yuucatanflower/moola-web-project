@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import AuthPanel from "./components/auth/AuthPanel";
 import Dashboard from "./components/dashboard/Dashboard";
 import Home from "./components/dashboard/Home";
@@ -16,6 +16,7 @@ import {
 } from "./services/api";
 import { buildSession, clearSession, readStoredSession, saveSession } from "./utils/session";
 import { getTokenExpiryMs } from "./utils/jwt";
+import { applyTwemoji } from "./utils/emoji";
 import "./index.css";
 import AdminPanel from "./components/dashboard/AdminPanel";
 
@@ -165,6 +166,14 @@ function App() {
   const handleLogout = () => {
     performLogout({ type: "success", text: "You are logged out on this browser." });
   };
+
+  const rootRef = useRef(null);
+
+  // Re-applies after every render since React re-renders emoji text back to
+  // plain unicode whenever the surrounding content changes.
+  useEffect(() => {
+    applyTwemoji(rootRef.current);
+  });
 
   // Auto-logout safety net: if any authenticated request comes back 401 (token
   // expired, invalid, or revoked server-side), log out immediately instead of
@@ -325,7 +334,7 @@ function App() {
 
   if (isAdminPage) {
     return (
-      <div className="grid min-h-screen place-items-center bg-[radial-gradient(circle_at_22%_10%,rgba(34,197,94,0.10),transparent_28rem),radial-gradient(circle_at_82%_82%,rgba(132,204,22,0.08),transparent_30rem),linear-gradient(145deg,#ffffff_0%,#f3fbf4_48%,#ffffff_100%)] p-[clamp(18px,4vw,48px)] font-sans text-black transition-colors dark:bg-[radial-gradient(circle_at_22%_10%,rgba(126,255,175,0.18),transparent_28rem),radial-gradient(circle_at_82%_82%,rgba(222,255,154,0.10),transparent_30rem),linear-gradient(145deg,#020302_0%,#071108_48%,#020302_100%)] dark:text-[#daffde]">
+      <div ref={rootRef} className="grid min-h-screen place-items-center bg-[radial-gradient(circle_at_22%_10%,rgba(34,197,94,0.10),transparent_28rem),radial-gradient(circle_at_82%_82%,rgba(132,204,22,0.08),transparent_30rem),linear-gradient(145deg,#ffffff_0%,#f3fbf4_48%,#ffffff_100%)] p-[clamp(18px,4vw,48px)] font-sans text-black transition-colors dark:bg-[radial-gradient(circle_at_22%_10%,rgba(126,255,175,0.18),transparent_28rem),radial-gradient(circle_at_82%_82%,rgba(222,255,154,0.10),transparent_30rem),linear-gradient(145deg,#020302_0%,#071108_48%,#020302_100%)] dark:text-[#daffde]">
         <AdminPanel session={session} />
       </div>
     );
@@ -370,7 +379,7 @@ function App() {
   ];
 
   return (
-    <div className="animate-aurora min-h-screen bg-[radial-gradient(circle_at_22%_10%,rgba(34,197,94,0.10),transparent_28rem),radial-gradient(circle_at_82%_82%,rgba(132,204,22,0.08),transparent_30rem),linear-gradient(145deg,#ffffff_0%,#f3fbf4_48%,#ffffff_100%)] p-[clamp(18px,4vw,48px)] font-sans text-black transition-colors dark:bg-[radial-gradient(circle_at_22%_10%,rgba(126,255,175,0.18),transparent_28rem),radial-gradient(circle_at_82%_82%,rgba(222,255,154,0.10),transparent_30rem),linear-gradient(145deg,#020302_0%,#071108_48%,#020302_100%)] dark:text-[#daffde]">
+    <div ref={rootRef} className="animate-aurora min-h-screen bg-[radial-gradient(circle_at_22%_10%,rgba(34,197,94,0.10),transparent_28rem),radial-gradient(circle_at_82%_82%,rgba(132,204,22,0.08),transparent_30rem),linear-gradient(145deg,#ffffff_0%,#f3fbf4_48%,#ffffff_100%)] p-[clamp(18px,4vw,48px)] font-sans text-black transition-colors dark:bg-[radial-gradient(circle_at_22%_10%,rgba(126,255,175,0.18),transparent_28rem),radial-gradient(circle_at_82%_82%,rgba(222,255,154,0.10),transparent_30rem),linear-gradient(145deg,#020302_0%,#071108_48%,#020302_100%)] dark:text-[#daffde]">
       {session ? (
         <div className="mx-auto flex w-full max-w-[1800px] flex-col items-center">
           <nav className="mb-6 flex w-full items-center self-start">

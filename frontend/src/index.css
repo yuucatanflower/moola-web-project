@@ -54,3 +54,12 @@ body::before {
   background-size: 160% 160%, 160% 160%, 100% 100%;
   animation: aurora-flow 28s ease-in-out infinite;
 }
+
+/* twemoji SVGs replace inline emoji text -- size/align them like a text glyph */
+img.twemoji {
+  height: 1em;
+  width: 1em;
+  margin: 0 0.05em 0 0.1em;
+  vertical-align: -0.1em;
+  display: inline-block;
+}
