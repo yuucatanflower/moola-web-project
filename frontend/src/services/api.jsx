@@ -154,3 +154,61 @@ export const updateUserProfile = async (token, profileData) =>
         },
         body: JSON.stringify(profileData),
     });
+
+export const fetchSavingsJars = async (token) =>
+    request("/jars", {
+        method: "GET",
+        headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+        },
+    });
+
+export const createSavingsJar = async (token, jar) =>
+    request("/jars", {
+        method: "POST",
+        headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(jar),
+    });
+
+export const updateSavingsJar = async (token, id, jar) =>
+    request(`/jars/${id}`, {
+        method: "PUT",
+        headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(jar),
+    });
+
+export const deleteSavingsJar = async (token, id) =>
+    request(`/jars/${id}`, {
+        method: "DELETE",
+        headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+        },
+    });
+
+export const depositToSavingsJar = async (token, id, amount) =>
+    request(`/jars/${id}/deposit`, {
+        method: "PATCH",
+        headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ amount }),
+    });
+
+export const withdrawFromSavingsJar = async (token, id, amount) =>
+    request(`/jars/${id}/withdraw`, {
+        method: "PATCH",
+        headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ amount }),
+    });
