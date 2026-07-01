@@ -53,7 +53,6 @@ public class CategoryServiceTest {
         testCategory.setId(categoryId);
         testCategory.setName("Groceries");
         testCategory.setColorHex("#FFFFFF");
-        testCategory.setEmoji("🛒");
         testCategory.setUser(testUser);
     }
 
