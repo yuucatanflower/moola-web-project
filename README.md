@@ -8,6 +8,20 @@ that will either roast your coffee habit or talk you down from it, your choice.
 
 ---
 
+## Screenshots
+
+| | |
+|---|---|
+| ![Sign in](docs/screenshots/login.png) | ![Log a transaction](docs/screenshots/home.png) |
+| ![Dashboard](docs/screenshots/dashboard-overview.png) | ![Savings Jars](docs/screenshots/jars.png) |
+
+<details>
+<summary>AI advisor + recurring payments</summary>
+
+![Dashboard with AI advisor and recurring payments](docs/screenshots/dashboard-recurring.png)
+
+</details>
+
 ## Features
 
 - **Time/Money Translator** — every purchase can be shown as "X hours of your life" instead of a
